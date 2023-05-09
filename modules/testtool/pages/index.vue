@@ -1,16 +1,29 @@
 <template>
   <TestLayout>
     <template #left>
-      <strong>컴포넌트 트리</strong>
-      <div v-if="_components">
-        <div v-for="(item, idx) of _components" :key="idx">
-          <div v-if="item">
-            <side-menus v-if="item" :menus="item" />
+      <strong>Component Tree</strong>
+      <div v-if="_componentsTree">
+        <div v-for="(value, key) in _componentsTree" :key="key">
+          <div v-if="value">
+            <tree-structure v-if="value" :menus="{ [key]: value }" />
           </div>
         </div>
       </div>
       <div v-else>
-        <strong>메뉴가 존재하지 않습니다.</strong>
+        <strong>컴포넌트가 존재하지 않습니다.</strong>
+      </div>
+      <br><br>
+
+      <strong>Imports Tree</strong>
+      <div v-if="_importsTree">
+        <div v-for="(value, key) in _importsTree" :key="key">
+          <div v-if="value">
+            <tree-structure v-if="value" :menus="{ [key]: value }" />
+          </div>
+        </div>
+      </div>
+      <div v-else>
+        <strong>구성함수가 존재하지 않습니다.</strong>
       </div>
       <br><br>
 
@@ -187,7 +200,7 @@
 
 <script setup>
 import TestLayout from '@/modules/testtool/layout/default.vue'
-import sideMenus from '@/modules/testtool/sideMenus.vue'
+import treeStructure from '@/modules/testtool/treeStructure.vue'
 import WrapperTheme from '@/modules/testtool/wrapperTheme.vue'
 import importCodes from '@/modules/testtool/importCodes.vue'
 import { io } from 'socket.io-client'
@@ -201,17 +214,28 @@ const $props = defineProps({
 
 const currComponentRef = ref()
 const _socket = ref()
-const _utils = ref([])
+
+const _componentsBasePath = ref()
+const _importsBasePath = ref()
+const _utilsBasePath = ref()
+
+const _componentsTree = ref([])
+const _composablesTree = ref([])
+const _utilsTree = ref([])
+const _importsTree = ref([])
+
+const _components = ref()
 const _composables = ref([])
+const _utils = ref([])
 const _plugins = ref([])
 const _imports = ref([])
-const _components = ref()
+
 const _fileData = ref()
 const _propsData = ref()
 const _storyPropsData = ref({})
 const _componentData = ref()
 const _stateData = ref()
-const _basePath = ref()
+
 const c_theme = computed(() => {
   return defineTheme()
 })
@@ -232,7 +256,12 @@ onMounted(() => {
   _socket.value = io('http://localhost:11000')
 
   _socket.value.on('imports:extend', (data) => {
-    _imports.value = data
+    _importsBasePath.value = data.basePath
+    _importsTree.value = data.tree
+    _imports.value = data.imports
+
+    console.log(_importsTree.value)
+
     _imports.value.forEach((item, idx) => {
       if (item.directory === 'utils') _utils.value.push(item)
       else if (item.directory === 'plugins') _plugins.value.push(item)
@@ -245,10 +274,11 @@ onMounted(() => {
   })
 
   _socket.value.on('components:extend', (data) => {
-    _basePath.value = data.basePath
+    _componentsBasePath.value = data.basePath
+    _componentsTree.value = data.tree
     _components.value = data.components
 
-    if (params.path) _socket.value.emit('load:file', `${_basePath.value}/${params.path.join('/')}.vue`)
+    if (params.path) _socket.value.emit('load:file', `${_componentsBasePath.value}/${params.path.join('/')}.vue`)
   })
 
   _socket.value.on('update:file', (data) => {

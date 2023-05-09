@@ -29,12 +29,16 @@ export default defineNuxtModule({
     })
 
     const allComponent = []
-    const extendComponents = []
-    const importsArr = []
+    const allImports = []
+    const componentNames = []
+    const componentsTree = {}
+    const importsTree = {}
+    const utilsTree = []
+    const extendImports = []
     const fileChanges = []
 
-    function fileAnalyzer(path) {
-      const content = fs.readFileSync(path, { encoding: 'utf8', flag: 'r' })
+    function fileAnalyzer(filePath) {
+      const content = fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' })
 
       const templateCode = content.match(/<template((.|\n)*)\/template>/g)
       const scriptCode = content.match(/<script((.|\n)*)\/script>/g)
@@ -43,13 +47,14 @@ export default defineNuxtModule({
 
       const relativeCode = tags.reduce((acc, tag) => {
         const pureTag = tag.split(' ')[0].replace(/<|>|\/|-|_/g, '').toLowerCase()
-        if (allComponent.includes(pureTag)) {
-          const tagInfor = allComponent[allComponent.indexOf(pureTag)]
+        
+        if (componentNames.includes(pureTag)) {
+          const tagInfor = allComponent[componentNames.indexOf(pureTag)]
           const addedData = {
             tagName: tagInfor.pascalName,
           }
 
-          const baseFileName = path.replace(process.env.PWD, '').replace('.vue', '').toLowerCase().split('/').slice(2).join('')
+          const baseFileName = filePath.replace(process.env.PWD, '').replace('.vue', '').toLowerCase().split('/').slice(2).join('')
           if (baseFileName !== pureTag) {
             const { relativeCode: nestedRelative } = fileAnalyzer(tagInfor.filePath)
             
@@ -118,14 +123,16 @@ export default defineNuxtModule({
       const isFileReg = new RegExp(/\.\S+/g)
 
       if (isFileReg.test(currName)) {
-        baseObj.item.push({
-          name: currName,
-          projectPath,
-          filePath
-        })
+        if (!baseObj.item.filter(item => item.name === currName).length) {
+          baseObj.item.push({
+            name: currName,
+            projectPath,
+            filePath
+          })
+        }
       } else {
         if (root) {
-          if (!Object.keys(baseObj).length) baseObj[currName] = { item: [], child: [] }
+          if (!Object.keys(baseObj).filter(item => item === currName).length) baseObj[currName] = { item: [], child: [] }
           
           createPathObject(pathArr.join('/'), projectPath, filePath, baseObj[currName], false)
         } else {
@@ -164,11 +171,9 @@ export default defineNuxtModule({
       imports.forEach((item, idx) => {
         const shortPath = item.from.replace(`${process.env.PWD}/`, '')
         const importDirectory = shortPath.split('/')[0]
+        createPathObject(shortPath, shortPath.split('.')[0], item.from, importsTree)
 
-        // const baseObj = {}
-        // createPathObject(shortPath, shortPath.split('.')[0], item.from, baseObj)
-
-        importsArr.push({
+        allImports.push({
           ...item,
           shortPath: shortPath,
           directory: importDirectory !== 'utils' ? 'composables' : importDirectory,
@@ -181,21 +186,24 @@ export default defineNuxtModule({
         io.emit('update:file', { filename, type })
       })
       
-      const baseObj = {}
       components.map((component, idx) => {
-        createPathObject(component.shortPath, component.shortPath.split('.')[0], component.filePath, baseObj)
+        createPathObject(component.shortPath, component.shortPath.split('.')[0], component.filePath, componentsTree)
 
         allComponent.push(component)
+        componentNames.push(component.pascalName.toLowerCase())
       })
-
-      extendComponents.push(baseObj)
     })
 
     io.on('connection', (socket) => {
-      io.emit('imports:extend', importsArr)
+      io.emit('imports:extend', {
+        basePath: process.env.PWD,
+        imports: allImports,
+        tree: importsTree
+      })
       io.emit('components:extend', {
         basePath: process.env.PWD,
-        components: extendComponents,
+        components: allComponent,
+        tree: componentsTree
       })
       io.emit('builder:watch', fileChanges)
 

@@ -1,6 +1,6 @@
 <template>
   <div class="test4">
-    previewSample-test-test2-test4
+    sample-test-test2-test4
     <preview-sample-test2-test4 />
     {{ p_test }}
   </div>

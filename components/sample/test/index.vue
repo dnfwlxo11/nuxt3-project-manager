@@ -1,5 +1,5 @@
 <template>
   <div>
-    previewSample-test-index
+    sample-test-index
   </div>
 </template>

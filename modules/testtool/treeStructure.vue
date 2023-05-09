@@ -11,14 +11,14 @@
     </div>
     <div v-if="_childes">
       <div v-for="(child, idx) of _childes" :key="idx">
-        <side-menus class="side-menus" :menus="child" />
+        <tree-structure class="tree-structure" :menus="child" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import sideMenus from '@/modules/testtool/sideMenus.vue'
+import treeStructure from '@/modules/testtool/treeStructure.vue'
 
 const $props = defineProps({
   menus: {
@@ -41,7 +41,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.side-menus {
+.tree-structure {
   margin: 0 0 10px 20px;
 
   .menu {

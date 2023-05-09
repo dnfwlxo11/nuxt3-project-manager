@@ -1,6 +1,6 @@
 <template>
   <div>
-    previewSample-test3-test4-test
+    sample-test3-test4-test
   </div>
 </template>
 

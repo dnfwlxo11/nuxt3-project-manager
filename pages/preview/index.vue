@@ -2,12 +2,12 @@
   <div>
     <div v-for="(item, idx) of _components" :key="idx">
       <div v-if="item">
-        <side-menus v-if="item" :menus="item" />
+        <tree-structure v-if="item" :menus="item" />
       </div>
     </div>
     <div v-for="(item, idx) of _imports" :key="idx">
       <div v-if="item">
-        <side-menus v-if="item" :menus="item" />
+        <tree-structure v-if="item" :menus="item" />
       </div>
     </div>
     <div v-if="_fileData">
@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import sideMenus from '@/modules/testtool/sideMenus.vue'
+import treeStructure from '@/modules/testtool/treeStructure.vue'
 import { io } from 'socket.io-client'
 
 const _socket = ref()
