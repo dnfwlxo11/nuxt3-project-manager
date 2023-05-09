@@ -45,9 +45,6 @@ export default defineNuxtModule({
         const pureTag = tag.split(' ')[0].replace(/<|>|\/|-|_/g, '').toLowerCase()
         if (allComponent.includes(pureTag)) {
           const tagInfor = allComponent[allComponent.indexOf(pureTag)]
-          console.log(allComponent.indexOf(pureTag))
-          console.log(extendComponents)
-          console.log(tagInfor, 'tagInfor')
           const addedData = {
             tagName: tagInfor.pascalName,
           }
@@ -118,9 +115,9 @@ export default defineNuxtModule({
       const pathArr = shortPath.split('/')
       const currName = pathArr.shift()
 
-      const isFileReg = '^\s*[\p{L}\p{N}\p{Pd}\p{Zs}]+\s*(?:[\p{L}\p{N}\p{Pd}\p{Zs}]+\s*)*(?:\.[\p{L}\p{N}\p{Pd}\p{Zs}]+)?\s*$'
+      const isFileReg = new RegExp(/\.\S+/g)
 
-      if (currName.includes('.vue')) {
+      if (isFileReg.test(currName)) {
         baseObj.item.push({
           name: currName,
           projectPath,
@@ -145,22 +142,7 @@ export default defineNuxtModule({
           createPathObject(pathArr.join('/'), projectPath, filePath, baseObj.child.filter(item => Object.keys(item)[0] === currName)[0][currName], false)
         }
       }
-
-      return baseObj
     }
-
-
-    nuxt.hook('imports:extend', (imports) => {
-      imports.forEach((item, idx) => {
-        const importDirectory = item.from.replace(`${process.env.PWD}/`, '').split('/')[0]
-
-        importsArr.push({
-          ...item,
-          shortPath: item.from.replace(`${process.env.PWD}/`, ''),
-          directory: importDirectory !== 'utils' ? 'composables' : importDirectory,
-        })
-      })
-    })
 
     nuxt.hook('pages:extend', (pages) => {
       pages.push({ 
@@ -178,17 +160,31 @@ export default defineNuxtModule({
       })
     })
 
+    nuxt.hook('imports:extend', (imports) => {
+      imports.forEach((item, idx) => {
+        const shortPath = item.from.replace(`${process.env.PWD}/`, '')
+        const importDirectory = shortPath.split('/')[0]
+
+        // const baseObj = {}
+        // createPathObject(shortPath, shortPath.split('.')[0], item.from, baseObj)
+
+        importsArr.push({
+          ...item,
+          shortPath: shortPath,
+          directory: importDirectory !== 'utils' ? 'composables' : importDirectory,
+        })
+      })
+    })
+
     nuxt.hook('components:extend', (components) => {
       fs.watch(path.join(process.env.PWD, 'components'), (type, filename) => {
         io.emit('update:file', { filename, type })
       })
       
-      let baseObj = {}
+      const baseObj = {}
       components.map((component, idx) => {
-        const result = createPathObject(component.shortPath, component.shortPath.split('.')[0], component.filePath, baseObj)
-        baseObj = result
+        createPathObject(component.shortPath, component.shortPath.split('.')[0], component.filePath, baseObj)
 
-        console.log(component.pascalName)
         allComponent.push(component)
       })
 
