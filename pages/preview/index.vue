@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import treeStructure from '@/modules/testtool/treeStructure.vue'
+import treeStructure from '@/modules/testtool/components/basic/treeStructure.vue'
 import { io } from 'socket.io-client'
 
 const _socket = ref()

@@ -5,7 +5,6 @@
       <div class="menu" style="border-left: 4px solid lightgrey;padding-left:10px"
         @click="$router.push(`/test/${item.projectPath}`)">
         📄<span>{{ item.name }}
-          <!-- (<small><span>{{ item.path }}</span></small>) -->
         </span>
       </div>
     </div>
@@ -18,7 +17,7 @@
 </template>
 
 <script setup>
-import treeStructure from '@/modules/testtool/treeStructure.vue'
+import treeStructure from '@/modules/testtool/components/basic/treeStructure.vue'
 
 const $props = defineProps({
   menus: {

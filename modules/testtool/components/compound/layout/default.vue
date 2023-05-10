@@ -10,26 +10,28 @@
   </div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .test {
-  margin: 0 auto;
-  height: calc(100vh - 20px);
+  height: 100vh;
   display: flex;
+  justify-content: center;
+  overflow: hidden;
 
   .left {
-    padding: 30px 20px;
-    width: 30%;
-    overflow: auto;
+    overflow-y: scroll;
 
-    ::-webkit-scrollbar {
+    &::-webkit-scrollbar {
       display: none;
     }
+
+    background-color: #F8F9FB;
+    height: 100vh;
+    width: 412px;
   }
 
   .right {
-    padding: 40px;
-    width: 70%;
-    overflow: auto;
+    height: 100vh;
+    flex: 1 1 auto;
   }
 }
 </style>

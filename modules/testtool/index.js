@@ -3,8 +3,6 @@ import fs from 'fs'
 import path from 'path'
 import http from 'http'
 import socket from 'socket.io'
-import deepmerge from 'deepmerge'
-import merge from 'lodash/merge'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -37,44 +35,53 @@ export default defineNuxtModule({
     const extendImports = []
     const fileChanges = []
 
-    function fileAnalyzer(filePath) {
-      const content = fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' })
+    function fileAnalyzer(filePath, type, root=true) {
+      if (type === 'component') {
+        const content = fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' })
 
-      const templateCode = content.match(/<template((.|\n)*)\/template>/g)
-      const scriptCode = content.match(/<script((.|\n)*)\/script>/g)
-      const styleCode = content.match(/<style((.|\n)*)\/style>/g)
-      const tags = content.match(/(<\/[\s+]?\w+[\s+]?>)|(<[\s+]?.*[\s+]?\/>)/g)
+        const templateCode = content.match(/<template((.|\n)*)\/template>/g)
+        const scriptCode = content.match(/<script((.|\n)*)\/script>/g)
+        const styleCode = content.match(/<style((.|\n)*)\/style>/g)
+        const tags = content.match(/(<\/[\s+]?\w+[\s+]?>)|(<[\s+]?.*[\s+]?\/>)/g)
 
-      const relativeCode = tags.reduce((acc, tag) => {
-        const pureTag = tag.split(' ')[0].replace(/<|>|\/|-|_/g, '').toLowerCase()
-        
-        if (componentNames.includes(pureTag)) {
-          const tagInfor = allComponent[componentNames.indexOf(pureTag)]
-          const addedData = {
-            tagName: tagInfor.pascalName,
+        const relativeCode = tags.reduce((acc, tag) => {
+          const pureTag = tag.split(' ')[0].replace(/<|>|\/|-|_/g, '').toLowerCase()
+          
+          if (componentNames.includes(pureTag)) {
+            const tagInfor = allComponent[componentNames.indexOf(pureTag)]
+            const addedData = {
+              tagName: tagInfor.pascalName,
+            }
+
+            const baseFileName = filePath.replace(process.env.PWD, '').replace('.vue', '').toLowerCase().split('/').slice(2).join('')
+            if (baseFileName !== pureTag) {
+              const { relativeCode: nestedRelative } = fileAnalyzer(tagInfor.filePath, type='component')
+              
+              if (nestedRelative.length) addedData['related'] = nestedRelative
+            }
+
+            acc.push(addedData)
           }
 
-          const baseFileName = filePath.replace(process.env.PWD, '').replace('.vue', '').toLowerCase().split('/').slice(2).join('')
-          if (baseFileName !== pureTag) {
-            const { relativeCode: nestedRelative } = fileAnalyzer(tagInfor.filePath)
-            
-            if (nestedRelative.length) addedData['related'] = nestedRelative
-          }
+          return acc
+        }, [])
 
-          acc.push(addedData)
+        const result = {
+          templateCode,
+          scriptCode,
+          styleCode,
+          relativeCode
         }
 
-        return acc
-      }, [])
+        return result
+      } else if (type === 'other') {
+        console.log('other type')
 
-      const result = {
-        templateCode,
-        scriptCode,
-        styleCode,
-        relativeCode
+        return false
+      } else {
+        console.log('분석이 불가능한 파일입니다.')
+        return false
       }
-
-      return result
     }
 
     function extractPathToObject(targetPath, rootPath='') {
@@ -117,10 +124,10 @@ export default defineNuxtModule({
     }
     
     function createPathObject(shortPath, projectPath, filePath, baseObj, root=true) {
+      const isFileReg = new RegExp(/\.\w\S+/g)
+
       const pathArr = shortPath.split('/')
       const currName = pathArr.shift()
-
-      const isFileReg = new RegExp(/\.\S+/g)
 
       if (isFileReg.test(currName)) {
         if (!baseObj.item.filter(item => item.name === currName).length) {
@@ -171,7 +178,18 @@ export default defineNuxtModule({
       imports.forEach((item, idx) => {
         const shortPath = item.from.replace(`${process.env.PWD}/`, '')
         const importDirectory = shortPath.split('/')[0]
-        createPathObject(shortPath, shortPath.split('.')[0], item.from, importsTree)
+
+        fs.watch(path.join(process.env.PWD, importDirectory), (type, filename) => {
+          io.emit('update:imports', { filename, type })
+        })
+
+        fs.watchFile(item.from, (curr, prev) => {
+          const updateFile = { name: shortPath, path: item.from, curr, prev }
+
+          io.emit('update:imports', updateFile)
+        })
+
+        createPathObject(shortPath, shortPath, item.from, importsTree)
 
         allImports.push({
           ...item,
@@ -181,13 +199,38 @@ export default defineNuxtModule({
       })
     })
 
-    nuxt.hook('components:extend', (components) => {
-      fs.watch(path.join(process.env.PWD, 'components'), (type, filename) => {
-        io.emit('update:file', { filename, type })
+    function updateTree(items) {
+      const tmpObj = {}
+      const tmpComponents = []
+      items.map((item, idx) => {
+        console.log(item, 'item')
+        createPathObject(item.shortPath, item.shortPath, item.filePath, tmpObj)
+
+        tmpComponents.push(item)
       })
+
+      return {
+        basePath: process.env.PWD,
+        components: tmpComponents,
+        tree: tmpObj,
+      }
+    }
+
+    nuxt.hook('components:extend', (components) => {
+      // fs.watch(path.join(process.env.PWD, 'components'), (type, filename) => {
+      //   io.emit('components:extend', updateTree(components))
+      //   io.emit('update:components', { filename, type })
+      // })
       
       components.map((component, idx) => {
-        createPathObject(component.shortPath, component.shortPath.split('.')[0], component.filePath, componentsTree)
+        fs.watchFile(component.filePath, (curr, prev) => {
+          const updateFile = { name: component.shortPath.split('/').pop(), path: component.filePath, curr, prev }
+
+          io.emit('components:extend', updateTree(components))
+          io.emit('update:components', updateFile)
+        })
+
+        createPathObject(component.shortPath, component.shortPath, component.filePath, componentsTree)
 
         allComponent.push(component)
         componentNames.push(component.pascalName.toLowerCase())
@@ -208,7 +251,14 @@ export default defineNuxtModule({
       io.emit('builder:watch', fileChanges)
 
       socket.on('load:file', (path) => {
-        io.emit('load:file', fileAnalyzer(path))
+        const isFileReg = new RegExp(/\.\w\S+/g)
+        const extensions = path.match(isFileReg)
+
+        if (extensions[0] === '.vue') {
+          io.emit('load:file', fileAnalyzer(path, 'component'))
+        } else if (extensions[0] === '.js') {
+          io.emit('load:file', fileAnalyzer(path, 'other'))
+        } else io.emit('load:file', fileAnalyzer(`${path}.vue`, 'component'))
       })
     })
   }

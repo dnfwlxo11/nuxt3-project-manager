@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-import TestLayout from '@/modules/testtool/layout/default.vue'
+import TestLayout from '@/modules/testtool/components/compound/layout/default.vue'
 
 onMounted(() => {
   f_setTargetTheme()
