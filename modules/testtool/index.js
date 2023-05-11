@@ -203,7 +203,6 @@ export default defineNuxtModule({
       const tmpObj = {}
       const tmpComponents = []
       items.map((item, idx) => {
-        console.log(item, 'item')
         createPathObject(item.shortPath, item.shortPath, item.filePath, tmpObj)
 
         tmpComponents.push(item)

@@ -1,14 +1,27 @@
 <template>
   <div v-if="_rootName">
-    <strong>📁 {{ _rootName }}</strong>
-    <div v-for="(item, idx) of _items" :key="idx">
-      <div class="menu" style="border-left: 4px solid lightgrey;padding-left:10px"
-        @click="$router.push(`/test/${item.projectPath}`)">
-        📄<span>{{ item.name }}
-        </span>
+    <div class="root" @click="_isExpand = !_isExpand">
+      <div class="icon">
+        <img src="/assets/icons/directory.svg" alt="">
+      </div>
+      <div class="content">
+        {{ _rootName }}
+      </div>
+      <div class="folding">
+        <img :src="`/assets/icons/${_isExpand ? 'upper' : 'down'}-chevron.svg`" alt="">
       </div>
     </div>
-    <div v-if="_childes">
+    <div class="item" v-if="_isExpand">
+      <div v-for="(item, idx) of _items" :key="idx" class="menu" @click="$router.push(`/test/${item.projectPath}`)">
+        <div class="icon">
+          <img src="/assets/icons/bullet.svg" alt="">
+        </div>
+        <div class="content">
+          {{ item.name }}
+        </div>
+      </div>
+    </div>
+    <div v-if="_childes && _isExpand">
       <div v-for="(child, idx) of _childes" :key="idx">
         <tree-structure class="tree-structure" :menus="child" />
       </div>
@@ -23,13 +36,14 @@ const $props = defineProps({
   menus: {
     type: Object,
     default: () => { return {} }
-  }
+  },
 })
 
 const { menus: p_menus } = toRefs($props)
 const _rootName = ref(null)
 const _items = ref(null)
 const _childes = ref(null)
+const _isExpand = ref(true)
 const $router = useRouter()
 
 onMounted(() => {
@@ -41,11 +55,76 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .tree-structure {
-  margin: 0 0 10px 20px;
+  padding: 5px 0 5px 20px;
+}
+
+.root {
+  display: flex;
+  color: #636A79;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 3px 5px;
+
+  &:hover {
+    background-clip: border-box;
+    background-color: lightgrey;
+  }
+
+  .icon {
+    margin: auto 0;
+    height: 15px;
+    width: 15px;
+  }
+
+  .content {
+    padding-left: 10px;
+    line-height: 22px;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .folding {
+    margin-left: auto;
+  }
+}
+
+.item {
+  padding: 0 5px;
+  padding-left: 10px;
+  margin-left: 10px;
+  border-left: 1px solid #D2D5DA;
+  color: #636A79;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   .menu {
-    :hover {
+    display: flex;
+    padding: 5px 0;
+    line-height: 22px;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
       cursor: pointer;
+      background-clip: border-box;
+      background-color: lightgrey;
+    }
+
+    .icon {
+      padding-left: 5px;
+      margin: auto 0;
+    }
+
+    .content {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-left: 10px;
     }
   }
 
