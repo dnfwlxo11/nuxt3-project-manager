@@ -8,7 +8,6 @@ import SemanticPage from '@/modules/testtool/components/semantic/index.vue'
 import TestLayout from '@/modules/testtool/components/compound/layout/default.vue'
 import treeStructure from '@/modules/testtool/components/basic/treeStructure.vue'
 import WrapperTheme from '@/modules/testtool/components/wrapper/wrapperTheme.vue'
-import importCodes from '@/modules/testtool/components/basic/importCodes.vue'
 import { io } from 'socket.io-client'
 
 const $props = defineProps({

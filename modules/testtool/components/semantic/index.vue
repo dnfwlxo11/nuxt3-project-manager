@@ -1,264 +1,11 @@
 <template>
   <TestLayout>
-    <div class="left-area">
-      <div class="left-first">
-        <div class="inner">
-          <div class="menu"
-            v-for="(item, idx) of ['all', 'components', 'imports', 'global storage', 'design system', 'language database', 'related']"
-            :key="idx">
-            <div class="icon">
-              <img src="/assets/icons/hexagon.svg" alt="">
-            </div>
-            <div class="tree-title">
-              {{ item.charAt(0).toUpperCase() + item.slice(1) }}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="left-second" ref="menuArea">
-        <div class="inner">
-          <div class="tree-title" @click="_trees[0] = !_trees[0]">COMPONENTS</div>
-          <div v-if="_componentsTree" :class="{ 'folding': _trees[0] }">
-            <div v-for="(value, key) in _componentsTree" :key="key">
-              <div v-if="value">
-                <tree-structure v-if="value" :menus="{ [key]: value }" />
-              </div>
-            </div>
-          </div>
-          <div v-else>
-            <strong>컴포넌트가 존재하지 않습니다.</strong>
-          </div>
+    <LeftMenu :components="_components" :imports="_imports" :componentsTree="_componentsTree"
+      :importsTree="_importsTree" />
 
-          <div class="tree-title" @click="_trees[1] = !_trees[1]">IMPORTS</div>
-          <div v-if="_importsTree" :class="{ 'folding': _trees[1] }">
-            <div v-for="( value, key ) in  _importsTree " :key="key">
-              <div v-if="value">
-                <tree-structure v-if="value" :menus="{ [key]: value }" />
-              </div>
-            </div>
-          </div>
-          <div v-else>
-            <strong>구성함수가 존재하지 않습니다.</strong>
-          </div>
-
-          <br><br>
-
-          <strong>Plugins</strong>
-          <div v-if="_plugins.length">
-            <importCodes :imports="_plugins" />
-          </div>
-          <div v-else>
-            <strong>추가된 플러그인이 없습니다.</strong>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="resizeBar" ref="resizeBar"></div>
-    <div v-if="_fileData" class="right-area">
-      <div class="preview-area">
-        <div v-if="!c_isComponent">
-          <div class="code">
-            컴포넌트 파일이 아닙니다.
-          </div>
-        </div>
-        <div v-else>
-          <div class="preview-component">
-            <Component :is="c_currComponent" ref="currComponentRef" />
-          </div>
-        </div>
-        <br><br>
-      </div>
 
-    </div>
-    <div class="third-area">
-      <div class="bottom-menus">
-        <div class="horizontal-menu">
-          <div class="dynamic-menus">
-            <div class="menu" v-for="(item, idx) of ['props', 'state', 'design', 'story', 'code', 'related']"
-              @click="_selectMenu = item" :key="idx">
-              {{ item.charAt(0).toUpperCase() + item.slice(1) }}
-            </div>
-          </div>
-          <div class="fixed-menus">
-            <div class="menu" v-for="(item, idx) of ['설정', '닫기']" :key="idx">
-              {{ item }}
-            </div>
-          </div>
-        </div>
-
-        <div class="areas">
-          <div class="props-area" v-if="_selectMenu === 'props'">
-            <div v-if="!c_isComponent">
-              <div>
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else-if="_propsData">
-              <pre v-if="_propsData[1].length">{{ f_getPropsData(_propsData) }}</pre>
-              <div v-else>{{ '컴포넌트에 props가 없습니다.' }}</div>
-            </div>
-            <div v-else>
-              <pre>{{ '컴포넌트에 props가 없습니다.' }}</pre>
-            </div>
-          </div>
-          <div class="state-area" v-else-if="_selectMenu === 'story'">
-            <div v-if="!c_isComponent">
-              <div>
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else-if="_propsData">
-              <div v-if="_propsData[1].length">
-                <Component :is="c_currComponent" :="_storyPropsData" />
-                <br>
-                <br>
-
-                <strong>구성할 수 있는 스토리</strong>
-
-                <div v-for="( prop, name, idx ) of  _storyPropsData " :key="idx">
-                  <br>
-                  <div>
-                    <div>이름: {{ name }}</div>
-                    <div>타입: {{ _propsData[0][name].type.name }}</div>
-                    <div>기본값: {{ _propsData[0][name].default }}</div>
-                  </div>
-
-                  <div v-if="prop.type === 'Number'">
-                    <input type="number" v-model="_storyPropsData[name]">
-                  </div>
-                  <div v-else-if="prop.type === 'Object'">
-                    Object 타입의 스토리보드는 아직 지원하지 않습니다.
-                  </div>
-                  <div v-else>
-                    <input type="text" v-model="_storyPropsData[name]">
-                  </div>
-                  <br>
-                </div>
-              </div>
-              <div v-else>{{ '스토리를 구성할 수 없습니다' }}</div>
-            </div>
-            <div v-else>
-              {{ '스토리를 구성할 수 없습니다' }}
-            </div>
-          </div>
-          <div class="design-area" v-else-if="_selectMenu === 'state'">
-            <div v-if="!c_isComponent">
-              <div>
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else-if="_stateData">
-              <pre v-if="Object.keys(_stateData).length">{{ _stateData }}</pre>
-              <div v-else>{{ '컴포넌트에 state가 없습니다.' }}</div>
-            </div>
-            <div v-else>
-              {{ '컴포넌트에 state가 없습니다.' }}
-            </div>
-          </div>
-          <div class="story-area" v-else-if="_selectMenu === 'design'">
-            <strong>테마들 상세 명세 및 미리보기</strong>
-            <div v-if="!c_isComponent">
-              <div class="code">
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else>
-              <pre class="code">{{ c_allThemes }}</pre>
-              <div class="themes">
-                <div class="theme-card" v-for="( theme, idx ) of  Object.keys(c_allThemes) " :content="theme" :key="idx">
-                  테마: {{ theme }}
-
-                  <Wrapper-theme :theme="theme">
-                    <Component :is="c_currComponent" ref="currComponentRef" />
-                  </Wrapper-theme>
-                </div>
-              </div>
-            </div>
-            <br><br>
-
-            <strong>현재 테마 미리보기</strong>
-            <div v-if="!c_isComponent">
-              <div class="code">
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else class="code">
-              <Wrapper-theme :theme="c__theme">
-                <Component :is="c_currComponent" ref="currComponentRef" />
-              </Wrapper-theme>
-            </div>
-            <br><br>
-
-            <strong>현재 적용중인 테마 명세</strong>
-            <div v-if="!c_isComponent">
-              <div class="code">
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else>
-              <pre class="code">{{ c__color }}</pre>
-            </div>
-          </div>
-          <div class="code-area" v-else-if="_selectMenu === 'code'">
-            <strong>template</strong>
-            <div v-if="!c_isComponent">
-              <div class="code">
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else-if="_fileData.templateCode">
-              <div v-for="( template, idx ) of  _fileData.templateCode " :key="idx">
-                <pre>{{ template }}</pre>
-              </div>
-            </div>
-            <div v-else>
-              {{ '작성된 템플릿 코드가 없습니다.' }}
-            </div>
-            <br><br>
-
-            <strong>script</strong>
-            <div v-if="!c_isComponent">
-              <div>
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else-if="_fileData.scriptCode">
-              <pre v-for="( script, idx ) of  _fileData.scriptCode " :key="idx">{{ script }}</pre>
-            </div>
-            <div v-else>
-              {{ '작성된 스크립트 코드가 없습니다.' }}
-            </div>
-
-            <strong>style</strong>
-            <div v-if="!c_isComponent">
-              <div>
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else-if="_fileData.styleCode">
-              <pre v-for="( style, idx ) of  _fileData.styleCode " :key="idx">{{ style }}</pre>
-            </div>
-            <div v-else>
-              {{ '작성된 스타일 코드가 없습니다.' }}
-            </div>
-          </div>
-          <div class="related-area" v-if="_selectMenu === 'related'">
-            <strong>related components</strong>
-            <div v-if="!c_isComponent">
-              <div class="code">
-                컴포넌트 파일이 아닙니다.
-              </div>
-            </div>
-            <div v-else-if="_fileData.relativeCode.length">
-              <div>{{ _fileData.relativeCode }}</div>
-            </div>
-            <div v-else>
-              {{ '관계된 컴포넌트가 없습니다.' }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <RightMenu :fileData="_fileData" />
   </TestLayout>
 </template>
 
@@ -266,9 +13,10 @@
 import SemanticPage from '@/modules/testtool/components/semantic/index.vue'
 
 import TestLayout from '@/modules/testtool/components/compound/layout/default.vue'
-import treeStructure from '@/modules/testtool/components/basic/treeStructure.vue'
-import WrapperTheme from '@/modules/testtool/components/wrapper/wrapperTheme.vue'
-import importCodes from '@/modules/testtool/components/basic/importCodes.vue'
+
+import LeftMenu from '@/modules/testtool/components/basic/menus/leftMenu.vue'
+import RightMenu from '@/modules/testtool/components/basic/menus/rightMenu.vue'
+
 import { io } from 'socket.io-client'
 
 const $props = defineProps({
@@ -278,7 +26,7 @@ const $props = defineProps({
   }
 })
 
-const currComponentRef = ref()
+const currentComponentRef = ref()
 const _socket = ref()
 
 const _componentsBasePath = ref()
@@ -290,7 +38,7 @@ const _composablesTree = ref([])
 const _utilsTree = ref([])
 const _importsTree = ref([])
 
-const _components = ref()
+const _components = ref([])
 const _composables = ref([])
 const _utils = ref([])
 const _plugins = ref([])
@@ -302,7 +50,6 @@ const menuX = ref()
 const menuY = ref()
 const menuWidth = ref()
 
-const _trees = ref([false, false, false])
 const _selectMenu = ref('props')
 
 const _fileData = ref()
@@ -326,7 +73,7 @@ const c_isComponent = computed(() => {
   return extensions[0] === '.vue'
 })
 
-const c_currComponent = computed(() => {
+const c_currentComponent = computed(() => {
   const path = params.path ? params.path.slice(1).reduce((acc, item) => {
     if (!item.includes('index')) acc += item.charAt(0).toUpperCase() + item.split('.')[0].slice(1)
     return acc
@@ -334,6 +81,7 @@ const c_currComponent = computed(() => {
 
   return path
 })
+
 const { params } = useRoute()
 
 onMounted(() => {
@@ -368,8 +116,6 @@ onMounted(() => {
   })
 
   _socket.value.on('update:components', (data) => {
-    // $router.go($router.currentRoute)
-
     console.log('update components', data)
   })
 
@@ -384,7 +130,6 @@ const h_menuResizeHandler = (evt) => {
   const dx = evt.clientX - menuX.value
   const dy = evt.clientY - menuY.value
 
-  // const adjustWidth = ((menuWidth.value + dx) * 100) / resizeBar.value.parentNode.getBoundingClientRect().width
   menuArea.value.style.width = `${menuWidth.value + dx - 40 < 200 ? 200 : menuWidth.value + dx - 40}px`
 }
 
@@ -398,8 +143,6 @@ const h_mouseDownHandler = (evt) => {
 }
 
 const h_mouseUpHandler = (evt) => {
-  console.log('mouse leave')
-
   menuArea.value.removeEventListener('mousemove', h_menuResizeHandler, false)
   menuArea.value.removeEventListener('mouseup', h_mouseUpHandler, false)
 }
@@ -416,13 +159,13 @@ const f_getPropsData = (props) => {
   return propsData
 }
 
-watch(currComponentRef, (newVal) => {
+watch(currentComponentRef, (newVal) => {
   nextTick(() => {
-    currComponentRef.value = newVal
-    _propsData.value = currComponentRef.value?.$?.propsOptions || null
+    currentComponentRef.value = newVal
+    _propsData.value = currentComponentRef.value?.$?.propsOptions || null
     _storyPropsData.value = f_getPropsData(_propsData.value)
-    _componentData.value = currComponentRef.value?.$?.data || null
-    _stateData.value = currComponentRef.value?.$?.setupState || null
+    _componentData.value = currentComponentRef.value?.$?.data || null
+    _stateData.value = currentComponentRef.value?.$?.setupState || null
 
     console.log(_propsData.value)
 
@@ -435,89 +178,6 @@ watch(currComponentRef, (newVal) => {
 <style lang="scss" scoped>
 .folding {
   display: none;
-}
-
-.left-area {
-  display: flex;
-  overflow-y: scroll;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  background-color: #F8F9FB;
-  height: 100vh;
-
-  .left-first {
-    height: 100%;
-    width: 100px;
-    min-width: 100px;
-    border-right: 1px solid #D2D5DA;
-
-    .inner {
-      padding: 40px 0;
-
-      .menu {
-        padding: 10px;
-        margin-bottom: 20px;
-
-        &:hover {
-          cursor: pointer;
-        }
-
-        .icon {
-          margin: 0 auto;
-          margin-bottom: 5px;
-          width: 18px;
-          height: 18px;
-        }
-
-        .tree-title {
-          margin: 0 auto;
-          text-align: center;
-          font-size: 9px;
-          color: #636A79;
-          line-height: 13.5px;
-          font-weight: 500;
-        }
-
-        &:hover {
-          background-color: lightgrey
-        }
-      }
-    }
-  }
-
-  .left-second {
-    flex: 1 1 auto;
-    min-width: 200px;
-    width: 250px;
-    padding: 20px;
-    border-right: 1px solid #D2D5DA;
-    overflow-x: hidden;
-    // text-overflow: ellipsis;
-    // white-space: nowrap;
-    overflow-y: auto;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    .inner {
-      .tree-title {
-        padding: 5px;
-        font-weight: 800;
-        color: gray;
-        letter-spacing: 0.1rem;
-        margin: 10px 0;
-        color: #32363E;
-
-        &:hover {
-          background-color: lightgrey;
-        }
-      }
-    }
-  }
 }
 
 .resizeBar {
