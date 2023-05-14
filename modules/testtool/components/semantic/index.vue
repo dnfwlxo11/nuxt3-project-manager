@@ -85,8 +85,8 @@ const c_currentComponent = computed(() => {
 const { params } = useRoute()
 
 onMounted(() => {
-  // _socket.value = io('http://localhost:11000')
-  _socket.value = io('http://192.168.123.187:11000')
+  _socket.value = io('http://localhost:11000')
+  // _socket.value = io('http://192.168.123.187:11000')
 
   _socket.value.on('imports:extend', (data) => {
     _importsBasePath.value = data.basePath
@@ -101,7 +101,6 @@ onMounted(() => {
   })
 
   _socket.value.on('load:file', (data) => {
-    console.log(data)
     _fileData.value = data
   })
 
@@ -116,11 +115,11 @@ onMounted(() => {
   })
 
   _socket.value.on('update:components', (data) => {
-    console.log('update components', data)
+    // console.log('update components', data)
   })
 
   _socket.value.on('update:imports', (data) => {
-    console.log('update imports', data)
+    // console.log('update imports', data)
   })
 
   resizeBar.value.addEventListener('mousedown', h_mouseDownHandler)
@@ -166,8 +165,6 @@ watch(currentComponentRef, (newVal) => {
     _storyPropsData.value = f_getPropsData(_propsData.value)
     _componentData.value = currentComponentRef.value?.$?.data || null
     _stateData.value = currentComponentRef.value?.$?.setupState || null
-
-    console.log(_propsData.value)
 
     delete _stateData.value['$router']
     delete _stateData.value['listening']

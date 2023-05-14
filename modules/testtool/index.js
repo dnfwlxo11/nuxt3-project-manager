@@ -39,10 +39,10 @@ export default defineNuxtModule({
       if (type === 'component') {
         const content = fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' })
 
-        const templateCode = content.match(/<template((.|\n)*)\/template>/g)
-        const scriptCode = content.match(/<script((.|\n)*)\/script>/g)
-        const styleCode = content.match(/<style((.|\n)*)\/style>/g)
-        const tags = content.match(/(<\/[\s+]?\w+[\s+]?>)|(<[\s+]?.*[\s+]?\/>)/g)
+        const templateCode = content.match(/\<template((.|\r\n|\r|\n)*)\/template\>/g)
+        const scriptCode = content.match(/\<script((.|\r\n|\r|\n)*)\/script\>/g)
+        const styleCode = content.match(/\<style((.|\r\n|\r|\n)*)\/style\>/g)
+        const tags = content.match(/(\<\/[\s+]?\w+[\s+]?\>)|(\<[\s+]?.*[\s+]?\/>)/g)
 
         const relativeCode = tags.reduce((acc, tag) => {
           const pureTag = tag.split(' ')[0].replace(/<|>|\/|-|_/g, '').toLowerCase()

@@ -102,11 +102,11 @@ onMounted(() => {
   _socket.value.on('update:components', (data) => {
     // $router.go($router.currentRoute)
 
-    console.log('update components', data)
+    // console.log('update components', data)
   })
 
   _socket.value.on('update:imports', (data) => {
-    console.log('update imports', data)
+    // console.log('update imports', data)
   })
 })
 

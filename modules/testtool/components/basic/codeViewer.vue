@@ -1,6 +1,7 @@
 <template>
   <div class="code-viewer">
-    <pre class="code" v-for="(code, idx) of p_code" :key="idx">{{ code }}</pre>
+    <!-- <pre class="code" v-for="(code, idx) of p_code" :key="idx">{{ code }}</pre> -->
+    <pre class="code" v-for="(code, idx) of p_code" :key="idx"><code :ref="(el) => setArrRef(el)">{{ code }}</code></pre>
 
     <div class="copy-btn">
       <div class="content">COPY</div>
@@ -9,6 +10,8 @@
 </template>
 
 <script setup>
+import hljs from 'highlight.js/lib/common'
+
 const $props = defineProps({
   code: {
     type: String,
@@ -17,6 +20,22 @@ const $props = defineProps({
 })
 
 const { code: p_code } = toRefs($props)
+const codes = ref([])
+
+const setArrRef = (el) => {
+  codes.value.push(el)
+}
+
+onMounted(() => {
+  codes.value.map((code, idx) => {
+    console.log()
+    const result = hljs.highlightAll(code.innerHTML)
+    // console.log(JSON.stringify(result.value))
+    // console.log(code.html, 'html')
+    // code.html(result.value)
+    // code.addClass('hljs')
+  })
+})
 </script>
 
 <style lang="scss" scoped>

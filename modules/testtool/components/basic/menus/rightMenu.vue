@@ -60,17 +60,16 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>1</td>
-                  <td>1</td>
+                <tr v-for="(item, key) in _storyPropsData" :key="key">
+                  <!-- {{ item }}{{ key }} -->
+                  <td>{{ key }}</td>
+                  <td><span class="type-badge">{{ _propsData[0][key].type.name }}</span></td>
+                  <td>{{ item }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-
-
 
         <!-- <div class="bottom-menus">
           <div class="horizontal-menu">
@@ -293,6 +292,7 @@ const currentComponentRef = ref()
 const { params } = useRoute()
 
 const f_getPropsData = (props) => {
+  console.log('props', props)
   const propsData = {}
   Object.entries(props[0]).forEach(([key, data]) => propsData[key] = data['default'])
 
@@ -470,6 +470,7 @@ watch(p_fileData, (newVal) => {
             width: 100%;
             color: #636A79;
             font-size: 16px;
+            border-spacing : 0;
 
             thead {
               height: 67px;
@@ -485,6 +486,15 @@ watch(p_fileData, (newVal) => {
             }
           }
         }
+      }
+
+      .type-badge {
+        border-radius: 18px;
+        padding: 2px 5px;
+        color: white;
+        font-size: 14px;
+        font-weight: 400;
+        background-color: lightgray;
       }
     }
   }
