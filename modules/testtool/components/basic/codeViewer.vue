@@ -28,7 +28,6 @@ const setArrRef = (el) => {
 
 onMounted(() => {
   codes.value.map((code, idx) => {
-    console.log()
     const result = hljs.highlightAll(code.innerHTML)
     // console.log(JSON.stringify(result.value))
     // console.log(code.html, 'html')

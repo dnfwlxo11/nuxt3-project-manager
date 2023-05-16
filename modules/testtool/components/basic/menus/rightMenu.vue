@@ -214,7 +214,6 @@ const _componentData = ref()
 const _stateData = ref()
 const currentComponentRef = ref()
 const _stories = ref(['default'])
-const { params } = useRoute()
 const _dummy = ref([
   { test: "prop test1", content: "Button1" },
   { test: "prop test2", content: "Button2" },
@@ -222,6 +221,9 @@ const _dummy = ref([
 ])
 const _storyComponent = ref([])
 const _currentStory = ref('default')
+const _componentTree = useState('componentsTree')
+
+const { params } = useRoute()
 const $router = useRouter()
 
 const f_getPropsData = (props) => {
@@ -253,6 +255,28 @@ const c_currentComponent = computed(() => {
   return path
 })
 
+const f_treeCircuit = (target) => {
+  Object.entries(target).map(([key, value]) => {
+    if (value.item.length) {
+      value.item = value.item.map((item, idx) => {
+        const currentComponentName = params.path.slice(1).join('').toLowerCase().replace('.vue', '')
+        const componentName = item.projectPath.split('/').slice(1).join('').toLowerCase().replace('.vue', '')
+
+        if (currentComponentName === componentName) return {...item, related: 1}
+        else return {...item, related: -1}
+      })
+    }
+
+    if (value.child.length) {
+      value.child.map(item => {
+        f_treeCircuit(item)
+      })
+    }
+  })
+
+  return target
+}
+
 onMounted(() => {
   _dummy.value.map((item, idx) => {
     _stories.value.push(`#STORY${(idx + 1).toString().padStart(2, '0')}`)
@@ -275,8 +299,8 @@ watch(currentComponentRef, (newVal) => {
 
 watch(p_fileData, (newVal) => {
   _fileData.value = newVal
-}
-)
+  _componentTree.value = f_treeCircuit(_componentTree.value)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -327,12 +351,10 @@ watch(p_fileData, (newVal) => {
   .right-second {
     display: flex;
     flex: 1 1 auto;
-    max-width: 800px;
 
     .preview-area {
       width: 70%;
       min-width: 200px;
-      // width: 400px;
       padding: 20px 10px;
       // padding, top menu height 계산
       height: calc(100vh - 110px);

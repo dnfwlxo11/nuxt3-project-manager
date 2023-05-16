@@ -127,6 +127,7 @@ onBeforeUnmount(() => {
 const f_getPropsData = (props) => {
   const propsData = {}
   Object.entries(props[0]).forEach(([key, data]) => propsData[key] = data['default'])
+
   return propsData
 }
 watch(currentComponentRef, (newVal) => {
@@ -136,6 +137,7 @@ watch(currentComponentRef, (newVal) => {
     _storyPropsData.value = f_getPropsData(_propsData.value)
     _componentData.value = currentComponentRef.value?.$?.data || null
     _stateData.value = currentComponentRef.value?.$?.setupState || null
+
     delete _stateData.value['$router']
     delete _stateData.value['listening']
     delete _stateData.value['options']

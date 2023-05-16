@@ -49,12 +49,16 @@ export default defineNuxtModule({
           
           if (componentNames.includes(pureTag)) {
             const tagInfor = allComponent[componentNames.indexOf(pureTag)]
+            const componentName = tagInfor.filePath.replace(process.env.PWD, '').split('/').slice(2).join('').replace('.vue', '').toLowerCase()
             const addedData = {
               tagName: tagInfor.pascalName,
+              filePath,
+              componentPath: tagInfor.filePath.replace(process.env.PWD, '').toLowerCase(),
+              componentName
             }
 
-            const baseFileName = filePath.replace(process.env.PWD, '').replace('.vue', '').toLowerCase().split('/').slice(2).join('')
-            if (baseFileName !== pureTag) {
+            const basePath = filePath.replace(process.env.PWD, '').toLowerCase()
+            if (basePath !== pureTag) {
               const { relativeCode: nestedRelative } = fileAnalyzer(tagInfor.filePath, type='component')
               
               if (nestedRelative.length) addedData['related'] = nestedRelative
