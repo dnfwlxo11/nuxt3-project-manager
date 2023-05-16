@@ -1,21 +1,22 @@
 <template>
-  <TestLayout>
-    <LeftMenu :components="_components" :imports="_imports" :componentsTree="_componentsTree"
-      :importsTree="_importsTree" />
-
-    <div class="resizeBar" ref="resizeBar"></div>
-
-    <RightMenu :fileData="_fileData" />
+   <TestLayout ref="layout">
+    <HorizResizeComponent>
+      <template #leftSide>
+        <LeftMenu :components="_components" :imports="_imports" />
+      </template>
+      <template #rightSide>
+        <RightMenu :fileData="_fileData" />
+      </template>
+    </HorizResizeComponent>
   </TestLayout>
 </template>
 
 <script setup>
 import SemanticPage from '@/modules/testtool/components/semantic/index.vue'
-
 import TestLayout from '@/modules/testtool/components/compound/layout/default.vue'
-
 import LeftMenu from '@/modules/testtool/components/basic/menus/leftMenu.vue'
 import RightMenu from '@/modules/testtool/components/basic/menus/rightMenu.vue'
+import HorizResizeComponent from '@/modules/testtool/components/compound/horizResizeComponent.vue'
 
 import { io } from 'socket.io-client'
 
@@ -33,10 +34,10 @@ const _componentsBasePath = ref()
 const _importsBasePath = ref()
 const _utilsBasePath = ref()
 
-const _componentsTree = ref([])
-const _composablesTree = ref([])
-const _utilsTree = ref([])
-const _importsTree = ref([])
+const _componentsTree = useState('componentsTree', () => { return [] })
+const _composablesTree = useState('composablesTree', () => { return [] })
+const _utilsTree = useState('utilsTree', () => { return [] })
+const _importsTree = useState('importsTree', () => { return [] })
 
 const _components = ref([])
 const _composables = ref([])
@@ -44,11 +45,8 @@ const _utils = ref([])
 const _plugins = ref([])
 const _imports = ref([])
 
-const menuArea = ref()
-const resizeBar = ref()
-const menuX = ref()
-const menuY = ref()
-const menuWidth = ref()
+const leftSide = ref()
+const rightSide = ref()
 
 const _selectMenu = ref('props')
 
@@ -57,7 +55,6 @@ const _propsData = ref()
 const _storyPropsData = ref({})
 const _componentData = ref()
 const _stateData = ref()
-const $router = useRouter()
 
 const c_theme = computed(() => {
   return defineTheme()
@@ -121,43 +118,17 @@ onMounted(() => {
   _socket.value.on('update:imports', (data) => {
     // console.log('update imports', data)
   })
-
-  resizeBar.value.addEventListener('mousedown', h_mouseDownHandler)
 })
-
-const h_menuResizeHandler = (evt) => {
-  const dx = evt.clientX - menuX.value
-  const dy = evt.clientY - menuY.value
-
-  menuArea.value.style.width = `${menuWidth.value + dx - 40 < 200 ? 200 : menuWidth.value + dx - 40}px`
-}
-
-const h_mouseDownHandler = (evt) => {
-  menuX.value = evt.clientX
-  menuY.value = evt.clientY
-  menuWidth.value = menuArea.value.offsetWidth
-
-  menuArea.value.addEventListener('mousemove', h_menuResizeHandler)
-  menuArea.value.addEventListener('mouseup', h_mouseUpHandler)
-}
-
-const h_mouseUpHandler = (evt) => {
-  menuArea.value.removeEventListener('mousemove', h_menuResizeHandler, false)
-  menuArea.value.removeEventListener('mouseup', h_mouseUpHandler, false)
-}
 
 onBeforeUnmount(() => {
   _socket.value.close()
-  resizeBar.value.removeEventListener('mousedown', h_mouseDownHandler, false)
 })
 
 const f_getPropsData = (props) => {
   const propsData = {}
   Object.entries(props[0]).forEach(([key, data]) => propsData[key] = data['default'])
-
   return propsData
 }
-
 watch(currentComponentRef, (newVal) => {
   nextTick(() => {
     currentComponentRef.value = newVal
@@ -165,7 +136,6 @@ watch(currentComponentRef, (newVal) => {
     _storyPropsData.value = f_getPropsData(_propsData.value)
     _componentData.value = currentComponentRef.value?.$?.data || null
     _stateData.value = currentComponentRef.value?.$?.setupState || null
-
     delete _stateData.value['$router']
     delete _stateData.value['listening']
     delete _stateData.value['options']
@@ -176,98 +146,28 @@ watch(currentComponentRef, (newVal) => {
 .folding {
   display: none;
 }
-
 .resizeBar {
   height: 100%;
   width: 2px;
   border: 1px solid inherit;
-
   &:hover {
     cursor: ew-resize;
   }
 }
-
-.right-area {
-  display: flex;
-  height: 100vh;
-  flex: 1 1 auto;
-  flex-direction: column;
-
-  .preview-area {
-    padding: 20px 40px;
-    flex: 1 1 auto;
-    width: 100%;
-
-    .preview-component {
-      display: inline-flex;
-      padding: 20px;
-      border-radius: 0.25rem;
-    }
-  }
-
-  .bottom-menus {
-    height: 55%;
-    position: relative;
-    // overflow-y: auto;
-
-    .horizontal-menu {
-      position: sticky;
-      top: 0;
-      height: 20px;
-      align-items: center;
-      background-color: white;
-      border-top: 1px solid #E1E3E5;
-      border-bottom: 1px solid #E1E3E5;
-      display: flex;
-      padding: 15px 0;
-
-      .dynamic-menus {
-        display: flex;
-
-        .menu {
-          padding: 0 10px;
-        }
-      }
-
-      .fixed-menus {
-        display: flex;
-        flex: 1 1 auto;
-        justify-content: right;
-
-        .menu {
-          padding: 0 10px;
-        }
-      }
-    }
-
-    .areas {
-      height: calc(100% - 50px);
-      overflow-y: auto;
-    }
-  }
-}
-
-.third-area {
-  background-color: lightblue;
-}
-
 .code {
   background-color: #F1F3F5;
   border-radius: 0.5rem;
   padding: 30px;
 }
-
 .themes {
   display: grid;
   border-radius: 0.5rem;
   background-color: #F1F3F5;
-
   .theme-card {
     margin: 20px;
     padding: 30px;
     border: 1px solid lightgrey;
     border-radius: 0.5rem;
-
     .theme-component {
       color: v-bind('c__color.defaultFontColor');
       background-color: v-bind('c__color.defaultBackground');

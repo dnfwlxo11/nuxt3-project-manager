@@ -2,8 +2,16 @@
   <div class="left-area">
     <div class="left-first">
       <div class="inner">
+        <div class="menu" v-if="isFolding" @click="isFolding = false">
+          <div class="icon">
+            <img src="/assets/icons/hexagon.svg" alt="">
+          </div>
+          <div class="tree-title">
+            Expand
+          </div>
+        </div>
         <div class="menu"
-          v-for="(item, idx) of ['all', 'components', 'imports', 'global storage', 'design system', 'language database', 'related']"
+          v-for="(item, idx) of ['components', 'imports', 'global storage', 'design system', 'language database', 'related']"
           :key="idx">
           <div class="icon">
             <img src="/assets/icons/hexagon.svg" alt="">
@@ -14,9 +22,12 @@
         </div>
       </div>
     </div>
-    <div class="left-second" ref="menuArea">
+    <div v-if="!isFolding" class="left-second">
       <div class="inner">
-        <div class="tree-title" @click="_trees[0] = !_trees[0]">COMPONENTS</div>
+        <div class="menu-folding">
+          <img @click="isFolding = true" src="/assets/icons/left-double-chevron.svg">
+        </div>
+        <div name="components" class="tree-title" @click="_trees[0] = !_trees[0]">COMPONENTS</div>
         <div v-if="_componentsTree" :class="{ 'folding': _trees[0] }">
           <div v-for="(value, key) in _componentsTree" :key="key">
             <div v-if="value">
@@ -28,7 +39,7 @@
           <strong>컴포넌트가 존재하지 않습니다.</strong>
         </div>
 
-        <div class="tree-title" @click="_trees[1] = !_trees[1]">IMPORTS</div>
+        <div name="imports" class="tree-title" @click="_trees[1] = !_trees[1]">IMPORTS</div>
         <div v-if="_importsTree" :class="{ 'folding': _trees[1] }">
           <div v-for="( value, key ) in  _importsTree " :key="key">
             <div v-if="value">
@@ -38,15 +49,6 @@
         </div>
         <div v-else>
           <strong>구성함수가 존재하지 않습니다.</strong>
-        </div>
-
-        <br><br>
-
-        <strong>Plugins</strong>
-        <div v-if="_plugins.length">
-        </div>
-        <div v-else>
-          <strong>추가된 플러그인이 없습니다.</strong>
         </div>
       </div>
     </div>
@@ -85,16 +87,10 @@ const {
 const _trees = ref([false, false, false])
 const _selectMenu = ref('props')
 
-const menuArea = ref()
-const resizeBar = ref()
-const menuX = ref()
-const menuY = ref()
-const menuWidth = ref()
+const isFolding = ref(false)
 
-const _componentsTree = ref([])
 const _composablesTree = ref([])
 const _utilsTree = ref([])
-const _importsTree = ref([])
 
 const _components = ref([])
 const _composables = ref([])
@@ -102,13 +98,16 @@ const _utils = ref([])
 const _plugins = ref([])
 const _imports = ref([])
 
-watch([p_components, p_imports, p_componentsTree, p_importsTree],
+const _componentsTree = useState('componentsTree')
+const _importsTree = useState('importsTree')
+
+watch([p_components, p_imports, _componentsTree, _importsTree],
   ([components, imports, componentsTree, importsTree]) => {
     _components.value = components
     _imports.value = imports
     _componentsTree.value = componentsTree
     _importsTree.value = importsTree
-  }
+  }, { immediate: true }
 )
 </script>
 
@@ -139,6 +138,7 @@ watch([p_components, p_imports, p_componentsTree, p_importsTree],
 
         &:hover {
           cursor: pointer;
+          background-color: #D2D5DA;
         }
 
         .icon {
@@ -156,19 +156,14 @@ watch([p_components, p_imports, p_componentsTree, p_importsTree],
           line-height: 13.5px;
           font-weight: 500;
         }
-
-        &:hover {
-          background-color: lightgrey
-        }
       }
     }
   }
 
   .left-second {
     flex: 1 1 auto;
-    min-width: 200px;
-    width: 250px;
-    padding: 20px;
+    // min-width: 200px;
+    width: 300px;
     border-right: 1px solid #D2D5DA;
     overflow-x: hidden;
     // text-overflow: ellipsis;
@@ -180,17 +175,35 @@ watch([p_components, p_imports, p_componentsTree, p_importsTree],
     }
 
     .inner {
+      .menu-folding {
+        margin: 20px 20px 10px 0;
+        text-align: right;
+
+        img {
+          width: 15px;
+          height: 15px;
+
+          &:hover {
+            cursor: pointer;
+          }
+        }
+      }
+
       .tree-title {
-        padding: 5px;
+        padding: 20px 20px 10px 20px;
         font-weight: 800;
         color: gray;
         letter-spacing: 0.1rem;
-        margin: 10px 0;
         color: #32363E;
 
         &:hover {
-          background-color: lightgrey;
+          cursor: pointer;
+          // background-color: lightgrey;
         }
+      }
+
+      .folding {
+        display: none;
       }
     }
   }

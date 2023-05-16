@@ -23,7 +23,7 @@
     </div>
     <div v-if="_childes && _isExpand">
       <div v-for="(child, idx) of _childes" :key="idx">
-        <tree-structure class="tree-structure" :menus="child" />
+        <tree-structure class="tree-structure" :menus="child" :depth="p_depth + 1" />
       </div>
     </div>
   </div>
@@ -37,9 +37,13 @@ const $props = defineProps({
     type: Object,
     default: () => { return {} }
   },
+  depth: {
+    type: Number,
+    default: 0,
+  }
 })
 
-const { menus: p_menus } = toRefs($props)
+const { menus: p_menus, depth: p_depth } = toRefs($props)
 const _rootName = ref(null)
 const _items = ref(null)
 const _childes = ref(null)
@@ -54,17 +58,15 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.tree-structure {
-  padding: 5px 0 5px 20px;
-}
-
 .root {
   display: flex;
   color: #636A79;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 3px 5px;
+  height: 42px;
+  padding: 0 20px;
+  padding-left: calc(v-bind('p_depth') * 20px + 20px);
 
   &:hover {
     background-clip: border-box;
@@ -73,12 +75,14 @@ onMounted(() => {
 
   .icon {
     margin: auto 0;
+    margin-right: 10px;
     height: 15px;
     width: 15px;
   }
 
   .content {
-    padding-left: 10px;
+    display: flex;
+    align-items: center;
     line-height: 22px;
     font-size: 15px;
     overflow: hidden;
@@ -87,15 +91,12 @@ onMounted(() => {
   }
 
   .folding {
+    margin: auto 0;
     margin-left: auto;
   }
 }
 
 .item {
-  padding: 0 5px;
-  padding-left: 10px;
-  margin-left: 10px;
-  border-left: 1px solid #D2D5DA;
   color: #636A79;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -103,28 +104,33 @@ onMounted(() => {
 
   .menu {
     display: flex;
-    padding: 5px 0;
     line-height: 22px;
+    padding-left: calc(v-bind('p_depth') * 20px + 20px);
     overflow-x: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    height: 42px;
 
     &:hover {
       cursor: pointer;
-      background-clip: border-box;
       background-color: lightgrey;
     }
 
     .icon {
-      padding-left: 5px;
-      margin: auto 0;
+      display: flex;
+      align-items: center;
+      // 아이콘 간 너비를 더하고 빼고 나눠서 정확히 중간에 오게함
+      margin-left: calc((20px - 10px + 8px - 3px) / 2);
+      padding-left: 20px;
+      padding-right: 10px;
+      border-left: 1px solid #D2D5DA;
+      height: 100%;
     }
 
     .content {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      padding-left: 10px;
     }
   }
 

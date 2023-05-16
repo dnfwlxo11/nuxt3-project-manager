@@ -1,6 +1,6 @@
 <template>
   <div class="right-menu">
-    <div class="right-top">
+    <div class="right-first">
       <div class="menu-tab">
         <div class="menu" :class="{ 'active': _selectTab === menu }" v-for="(menu, idx) of ['develop', 'design']"
           :key="idx" @click="_selectTab = menu">
@@ -11,255 +11,177 @@
         Playground
       </div>
     </div>
-    <div v-if="_fileData" class="right-bottom">
-      <div class="preview-area">
-        <div v-if="!c_isComponent">
-          <div class="code">
-            컴포넌트 파일이 아닙니다.
-          </div>
-        </div>
-        <div v-else>
-          <Breadcrumb :items="params.path" />
-          <LineSpaceDiv :space="20" />
-          <FirstTitle :content="params.path[params.path.length - 1]" />
-          <LineSpaceDiv :space="20" />
-          <SecondTitle :content="'PREVIEW'" />
-          <LineSpaceDiv :space="10" />
-          <div class="preview-component">
-            <div class="preview-menu">
-              <div class="zoom">
-                <img src="/assets/icons/magnify-minus.svg">
-                <div class="zoom-badge">100%</div>
-                <img src="/assets/icons/magnify-plus.svg">
-              </div>
-              <div class="viewer">
-                <img src="/assets/icons/export.svg">
+    <div v-if="_fileData" class="right-second">
+      <HorizResizeComponent>
+        <template #leftSide>
+          <div class="preview-area">
+            <div v-if="!c_isComponent">
+              <div class="code">
+                컴포넌트 파일이 아닙니다.
               </div>
             </div>
-            <div class="preview-content">
-              <Component :is="c_currentComponent" ref="currentComponentRef" />
-            </div>
-          </div>
-          <LineSpaceDiv :space="30" />
-          <SecondTitle :content="'CODE'" />
-          <CodeViewer :code="_fileData.templateCode" />
-        </div>
-      </div>
-      <div class="menu-area">
-        <div class="menu-table">
-          <div class="table-title">
-            PROPS
-          </div>
-          <div class="table-content">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Default</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, key) in _storyPropsData" :key="key">
-                  <!-- {{ item }}{{ key }} -->
-                  <td>{{ key }}</td>
-                  <td><span class="type-badge">{{ _propsData[0][key].type.name }}</span></td>
-                  <td>{{ item }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- <div class="bottom-menus">
-          <div class="horizontal-menu">
-            <div class="dynamic-menus">
-              <div class="menu" v-for="(item, idx) of ['props', 'state', 'design', 'story', 'code', 'related']"
-                @click="_selectMenu = item" :key="idx">
-                {{ item.charAt(0).toUpperCase() + item.slice(1) }}
-              </div>
-            </div>
-            <div class="fixed-menus">
-              <div class="menu" v-for="(item, idx) of ['설정', '닫기']" :key="idx">
-                {{ item }}
-              </div>
-            </div>
-          </div>
-
-          <div class="areas">
-            <div class="props-area" v-if="_selectMenu === 'props'">
-              <div v-if="!c_isComponent">
-                <div>
-                  컴포넌트 파일이 아닙니다.
+            <div v-else>
+              <Breadcrumb :items="params.path" />
+              <LineSpaceDiv :space="20" />
+              <FirstTitle :content="params.path[params.path.length - 1]" />
+              <LineSpaceDiv :space="20" />
+              <SecondTitle :content="'PREVIEW'" />
+              <LineSpaceDiv :space="10" />
+              <ComponentViewer :stories="_stories" @update:tab="(tab) => _currentStory = tab" :tab="_currentStory">
+                <Component v-show="_currentStory === 'default'" :is="c_currentComponent" ref="currentComponentRef" />
+                <div v-for="(item, idx) of _dummy" :key="idx">
+                  <Component v-if="_currentStory === _stories[idx + 1]" :is="c_currentComponent"
+                    :ref="(el) => _storyComponent.push(el)" :="item" />
                 </div>
+              </ComponentViewer>
+              <LineSpaceDiv :space="30" />
+              <SecondTitle :content="'CODE'" />
+              <CodeViewer :code="_fileData.templateCode" />
+            </div>
+          </div>
+        </template>
+        <template #rightSide>
+          <div class="menu-area">
+            <div v-if="Object.keys(_storyPropsData).length" class="menu-table">
+              <div class="table-title">
+                PROPS
               </div>
-              <div v-else-if="_propsData">
-                <pre v-if="_propsData[1].length">{{ f_getPropsData(_propsData) }}</pre>
-                <div v-else>{{ '컴포넌트에 props가 없습니다.' }}</div>
-              </div>
-              <div v-else>
-                <pre>{{ '컴포넌트에 props가 없습니다.' }}</pre>
+              <div class="table-content">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Default</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(item, key) in _storyPropsData" :key="key">
+                      <td>{{ key }}</td>
+                      <td><span class="type-badge">{{ _propsData[0][key].type.name }}</span></td>
+                      <td>{{ item }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-            <div class="state-area" v-else-if="_selectMenu === 'story'">
-              <div v-if="!c_isComponent">
-                <div>
-                  컴포넌트 파일이 아닙니다.
-                </div>
+            <div v-else class="menu-table">
+              <div class="table-title">
+                PROPS
               </div>
-              <div v-else-if="_propsData">
-                <div v-if="_propsData[1].length">
-                  <Component :is="c_currentComponent" :="_storyPropsData" />
-                  <br>
-                  <br>
-
-                  <strong>구성할 수 있는 스토리</strong>
-
-                  <div v-for="( prop, name, idx ) of  _storyPropsData " :key="idx">
-                    <br>
-                    <div>
-                      <div>이름: {{ name }}</div>
-                      <div>타입: {{ _propsData[0][name].type.name }}</div>
-                      <div>기본값: {{ _propsData[0][name].default }}</div>
+              <div class="table-content">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th colspan="3">Props 데이터가 존재하지 않습니다.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <LineSpaceDiv :space="40" />
+            <div v-if="Object.keys(_storyPropsData).length" class="menu-table">
+              <div class="table-title">
+                STORY
+              </div>
+              <div class="stories">
+                <div class="story" v-for="(dummyItem, idx) of _dummy" :key="idx">
+                  <div class="story-menu">
+                    <div class="story-badge">
+                      #STORY{{ (idx + 1).toString().padStart(2, '0') }}
                     </div>
-
-                    <div v-if="prop.type === 'Number'">
-                      <input type="number" v-model="_storyPropsData[name]">
+                    <div class="story-btn">
+                      <button @click="f_selectStory(`#STORY${(idx + 1).toString().padStart(2, '0')}`)" :class="{
+                        'active': _currentStory === `#STORY${(idx + 1).toString().padStart(2, '0')}`
+                      }">
+                        <span v-if="_currentStory === `#STORY${(idx + 1).toString().padStart(2, '0')}`">
+                          <img src="/assets/icons/done.svg" />
+                        </span>
+                        <span v-else>
+                          적용
+                        </span>
+                      </button>
                     </div>
-                    <div v-else-if="prop.type === 'Object'">
-                      Object 타입의 스토리보드는 아직 지원하지 않습니다.
-                    </div>
-                    <div v-else>
-                      <input type="text" v-model="_storyPropsData[name]">
-                    </div>
-                    <br>
                   </div>
-                </div>
-                <div v-else>{{ '스토리를 구성할 수 없습니다' }}</div>
-              </div>
-              <div v-else>
-                {{ '스토리를 구성할 수 없습니다' }}
-              </div>
-            </div>
-            <div class="design-area" v-else-if="_selectMenu === 'state'">
-              <div v-if="!c_isComponent">
-                <div>
-                  컴포넌트 파일이 아닙니다.
-                </div>
-              </div>
-              <div v-else-if="_stateData">
-                <pre v-if="Object.keys(_stateData).length">{{ _stateData }}</pre>
-                <div v-else>{{ '컴포넌트에 state가 없습니다.' }}</div>
-              </div>
-              <div v-else>
-                {{ '컴포넌트에 state가 없습니다.' }}
-              </div>
-            </div>
-            <div class="story-area" v-else-if="_selectMenu === 'design'">
-              <strong>테마들 상세 명세 및 미리보기</strong>
-              <div v-if="!c_isComponent">
-                <div class="code">
-                  컴포넌트 파일이 아닙니다.
-                </div>
-              </div>
-              <div v-else>
-                <pre class="code">{{ c_allThemes }}</pre>
-                <div class="themes">
-                  <div class="theme-card" v-for="( theme, idx ) of  Object.keys(c_allThemes) " :content="theme"
-                    :key="idx">
-                    테마: {{ theme }}
-
-                    <Wrapper-theme :theme="theme">
-                      <Component :is="c_currentComponent" ref="currentComponentRef" />
-                    </Wrapper-theme>
+                  <div class="table-content">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Control</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(item, key) in dummyItem" :key="key">
+                          <td>{{ key }}</td>
+                          <td><input type="text" v-model="dummyItem[key]"></td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-              <br><br>
-
-              <strong>현재 테마 미리보기</strong>
-              <div v-if="!c_isComponent">
-                <div class="code">
-                  컴포넌트 파일이 아닙니다.
+            </div>
+            <LineSpaceDiv :space="40" />
+            <div v-if="_fileData.relativeCode.length" class="menu-table">
+              <div class="table-content">
+                <div class="table-title">
+                  RELATED
                 </div>
-              </div>
-              <div v-else class="code">
-                <Wrapper-theme :theme="c__theme">
-                  <Component :is="c_currentComponent" ref="currentComponentRef" />
-                </Wrapper-theme>
-              </div>
-              <br><br>
-
-              <strong>현재 적용중인 테마 명세</strong>
-              <div v-if="!c_isComponent">
-                <div class="code">
-                  컴포넌트 파일이 아닙니다.
-                </div>
-              </div>
-              <div v-else>
-                <pre class="code">{{ c__color }}</pre>
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Related Component</th>
+                      <th>Deep Related</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(item, idx) in _fileData.relativeCode" :key="idx">
+                      <td @click="$router.push(`/test${item.componentPath}`)">{{ item.tagName }}</td>
+                      <td v-if="item.related">
+                        <div v-for="(deepItem, deepIdx) of item.related" :key="deepIdx">
+                          <div v-if="deepItem.related">
+                            더 깊은 참조가 있습니다.
+                          </div>
+                          <div v-else @click="$router.push(`/test${deepItem.componentPath}`)">
+                            {{ deepItem.tagName }}
+                          </div>
+                        </div>
+                      </td>
+                      <td v-else>-</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-            <div class="code-area" v-else-if="_selectMenu === 'code'">
-              <strong>template</strong>
-              <div v-if="!c_isComponent">
-                <div class="code">
-                  컴포넌트 파일이 아닙니다.
+            <div v-else class="menu-table">
+              <div class="table-content">
+                <div class="table-title">
+                  RELATED
                 </div>
-              </div>
-              <div v-else-if="_fileData.templateCode">
-                <div v-for="( template, idx ) of  _fileData.templateCode " :key="idx">
-                  <pre>{{ template }}</pre>
-                </div>
-              </div>
-              <div v-else>
-                {{ '작성된 템플릿 코드가 없습니다.' }}
-              </div>
-              <br><br>
-
-              <strong>script</strong>
-              <div v-if="!c_isComponent">
-                <div>
-                  컴포넌트 파일이 아닙니다.
-                </div>
-              </div>
-              <div v-else-if="_fileData.scriptCode">
-                <pre v-for="( script, idx ) of  _fileData.scriptCode " :key="idx">{{ script }}</pre>
-              </div>
-              <div v-else>
-                {{ '작성된 스크립트 코드가 없습니다.' }}
-              </div>
-
-              <strong>style</strong>
-              <div v-if="!c_isComponent">
-                <div>
-                  컴포넌트 파일이 아닙니다.
-                </div>
-              </div>
-              <div v-else-if="_fileData.styleCode">
-                <pre v-for="( style, idx ) of  _fileData.styleCode " :key="idx">{{ style }}</pre>
-              </div>
-              <div v-else>
-                {{ '작성된 스타일 코드가 없습니다.' }}
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th colspan="2">관계된 컴포넌트가 존재하지 않습니다.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>-</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-            <div class="related-area" v-if="_selectMenu === 'related'">
-              <strong>related components</strong>
-              <div v-if="!c_isComponent">
-                <div class="code">
-                  컴포넌트 파일이 아닙니다.
-                </div>
-              </div>
-              <div v-else-if="_fileData.relativeCode.length">
-                <div>{{ _fileData.relativeCode }}</div>
-              </div>
-              <div v-else>
-                {{ '관계된 컴포넌트가 없습니다.' }}
-              </div>
-            </div>
+            <LineSpaceDiv :space="40" />
           </div>
-        </div> -->
-      </div>
+        </template>
+      </HorizResizeComponent>
     </div>
   </div>
 </template>
@@ -271,6 +193,8 @@ import SecondTitle from '@/modules/testtool/components/basic/secondTitle.vue'
 import WrapperTheme from '@/modules/testtool/components/wrapper/wrapperTheme.vue'
 import LineSpaceDiv from '@/modules/testtool/components/basic/lineSpaceDiv.vue'
 import CodeViewer from '@/modules/testtool/components/basic/codeViewer.vue'
+import ComponentViewer from '@/modules/testtool/components/compound/componentViewer.vue'
+import HorizResizeComponent from '@/modules/testtool/components/compound/horizResizeComponent.vue'
 
 const $props = defineProps({
   fileData: {
@@ -289,14 +213,28 @@ const _storyPropsData = ref({})
 const _componentData = ref()
 const _stateData = ref()
 const currentComponentRef = ref()
+const _stories = ref(['default'])
 const { params } = useRoute()
+const _dummy = ref([
+  { test: "prop test1", content: "Button1" },
+  { test: "prop test2", content: "Button2" },
+  { test: "prop test3", content: "Button3" },
+])
+const _storyComponent = ref([])
+const _currentStory = ref('default')
+const $router = useRouter()
 
 const f_getPropsData = (props) => {
-  console.log('props', props)
+  // if (!props) return
+
   const propsData = {}
   Object.entries(props[0]).forEach(([key, data]) => propsData[key] = data['default'])
 
   return propsData
+}
+
+const f_selectStory = (name) => {
+  _currentStory.value = name
 }
 
 const c_isComponent = computed(() => {
@@ -313,6 +251,12 @@ const c_currentComponent = computed(() => {
   }, '') : ''
 
   return path
+})
+
+onMounted(() => {
+  _dummy.value.map((item, idx) => {
+    _stories.value.push(`#STORY${(idx + 1).toString().padStart(2, '0')}`)
+  })
 })
 
 watch(currentComponentRef, (newVal) => {
@@ -341,8 +285,9 @@ watch(p_fileData, (newVal) => {
   flex-direction: column;
   flex: 1 1 auto;
   height: 100vh;
+  border-right: 1px solid #D2D5DA;
 
-  .right-top {
+  .right-first {
     min-height: 70px;
     background-color: #F8F9FB;
     border-bottom: 1px solid #D2D5DA;
@@ -379,14 +324,16 @@ watch(p_fileData, (newVal) => {
     }
   }
 
-  .right-bottom {
+  .right-second {
     display: flex;
-
     flex: 1 1 auto;
+    max-width: 800px;
 
     .preview-area {
+      width: 70%;
+      min-width: 200px;
+      // width: 400px;
       padding: 20px 10px;
-      flex: 1 1 auto;
       // padding, top menu height 계산
       height: calc(100vh - 110px);
       border-right: 1px solid #D2D5DA;
@@ -396,62 +343,77 @@ watch(p_fileData, (newVal) => {
       &::-webkit-scrollbar {
         display: none;
       }
-
-      .preview-component {
-        border: 1px solid #ECEDEF;
-        background-color: #FFFFFF;
-        border-radius: 4px 4px 0px 0px;
-
-        .preview-menu {
-          border-bottom: 1px solid #ECEDEF;
-          height: 50px;
-          display: flex;
-
-          img {
-            width: 16px;
-            height: 16px;
-            min-width: 16px;
-            min-height: 16px;
-          }
-
-          .zoom {
-            display: flex;
-            align-items: center;
-            margin: auto 20px;
-
-            .zoom-badge {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              margin: auto 5px auto 5px;
-              padding: 2px 5px;
-              width: 60px;
-              height: 20px;
-              font-size: 14px;
-              border-radius: 18px;
-              background-color: #ECEDEF;
-            }
-          }
-
-          .viewer {
-            margin: auto 20px auto auto;
-          }
-        }
-
-        .preview-content {
-          height: 330px;
-          padding: 10px;
-        }
-      }
     }
 
     .menu-area {
+      width: 30%;
       min-width: 200px;
-      width: 250px;
-      background-color: #FFFFFF;
-      text-align: center;
+      flex: 1 0 auto;
+      height: calc(100vh - 70px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      background-color: #F8F9FB;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
 
       .menu-table {
+        .stories {
+          .story {
+            margin-bottom: 40px;
+
+            .story-menu {
+              display: flex;
+              margin: 0 10px 15px 10px;
+
+              .story-badge {
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                color: #FFFFFF;
+                background-color: #A0A5B1;
+                height: 22px;
+                padding: 0 5px;
+                font-weight: 600;
+                line-height: 29px;
+                letter-spacing: 0%;
+                font-size: 16px;
+              }
+
+              .story-btn {
+                margin-left: auto;
+
+                button {
+                  color: #636A79;
+                  border: 1px solid #D2D5DA;
+                  background-color: #ECEDEF;
+                  border-radius: 6px;
+                  padding: 5px 22px;
+                  font-weight: 600;
+                  font-size: 14px;
+                  line-height: 20px;
+                  height: 30px;
+                  width: 80px;
+
+                  img {
+                    display: block;
+                    margin: auto;
+                    height: 14px;
+                    width: 14px;
+                  }
+                }
+
+                .active {
+                  background-color: #CCCFD7;
+                  border: 1px solid #ECEDEF;
+                  color: #ECEDEF;
+                }
+              }
+            }
+          }
+        }
+
         .table-title {
           height: 67px;
           padding: 0 10px;
@@ -459,42 +421,62 @@ watch(p_fileData, (newVal) => {
           display: flex;
           justify-content: flex-start;
           align-items: center;
-          background-color: #F8F9FB;
-          border-bottom: 1px solid #ECEDEF;
+          // background-color: #F8F9FB;
           font-size: 22px;
           font-weight: 700;
         }
 
         .table-content {
           table {
+            border-top: 1px solid #ECEDEF;
             width: 100%;
             color: #636A79;
+            background-color: #FFFFFF;
             font-size: 16px;
-            border-spacing : 0;
+            border-spacing: 0;
 
             thead {
               height: 67px;
             }
 
             tbody {
+              text-align: center;
               height: 67px;
+            }
+
+            td {
+              padding: 10px;
             }
 
             th,
             td {
+              &:hover {
+                cursor: pointer;
+              }
+
               border-bottom: 1px solid #ECEDEF;
+            }
+
+            input {
+              width: calc(100% - 30px);
+              padding: 0 15px;
+              border: 1px solid #ECEDEF;
+              border-radius: 10px;
+              height: 40px;
             }
           }
         }
       }
 
       .type-badge {
-        border-radius: 18px;
-        padding: 2px 5px;
-        color: white;
-        font-size: 14px;
-        font-weight: 400;
-        background-color: lightgray;
+        border-radius: 10px;
+        padding: 2px 9px;
+        color: #A0A5B1;
+        background-color: #ECEDEF;
+        line-height: 20px;
+        letter-spacing: 0%;
+        font-size: 13px;
+        font-weight: 700;
       }
     }
   }
