@@ -176,6 +176,13 @@ export default defineNuxtModule({
         file: path.join(__dirname, 'pages/colorSystem.vue'),
         children: [],
       })
+
+      pages.push({ 
+        name: 'test-preview',
+        path: '/test/preview',
+        file: path.join(__dirname, 'pages/preview.vue'),
+        children: [],
+      })
     })
 
     nuxt.hook('imports:extend', (imports) => {

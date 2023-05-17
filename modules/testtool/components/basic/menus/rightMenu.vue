@@ -28,11 +28,13 @@
               <SecondTitle :content="'PREVIEW'" />
               <LineSpaceDiv :space="10" />
               <ComponentViewer :stories="_stories" @update:tab="(tab) => _currentStory = tab" :tab="_currentStory">
-                <Component v-show="_currentStory === 'default'" :is="c_currentComponent" ref="currentComponentRef" />
-                <div v-for="(item, idx) of _dummy" :key="idx">
-                  <Component v-if="_currentStory === _stories[idx + 1]" :is="c_currentComponent"
-                    :ref="(el) => _storyComponent.push(el)" :="item" />
-                </div>
+                <Preview>
+                  <Component v-show="_currentStory === 'default'" :is="c_currentComponent" ref="currentComponentRef" />
+                  <div v-for="(item, idx) of _dummy" :key="idx">
+                    <Component v-if="_currentStory === _stories[idx + 1]" :is="c_currentComponent"
+                      :ref="(el) => _storyComponent.push(el)" :="item" />
+                  </div>
+                </Preview>
               </ComponentViewer>
               <LineSpaceDiv :space="30" />
               <SecondTitle :content="'CODE'" />
@@ -195,6 +197,8 @@ import LineSpaceDiv from '@/modules/testtool/components/basic/lineSpaceDiv.vue'
 import CodeViewer from '@/modules/testtool/components/basic/codeViewer.vue'
 import ComponentViewer from '@/modules/testtool/components/compound/componentViewer.vue'
 import HorizResizeComponent from '@/modules/testtool/components/compound/horizResizeComponent.vue'
+import Preview from '@/modules/testtool/components/compound/preview.vue'
+// import Preview from '@/modules/testtool/pages/preview.vue'
 
 const $props = defineProps({
   fileData: {
@@ -221,18 +225,34 @@ const _dummy = ref([
 ])
 const _storyComponent = ref([])
 const _currentStory = ref('default')
+const $router = useRouter()
+const { params } = useRoute()
 const _componentTree = useState('componentsTree')
 
-const { params } = useRoute()
-const $router = useRouter()
-
 const f_getPropsData = (props) => {
-  // if (!props) return
-
   const propsData = {}
   Object.entries(props[0]).forEach(([key, data]) => propsData[key] = data['default'])
 
   return propsData
+}
+
+const f_treeCircuit = (target, searchName, flag = 1) => {
+  Object.entries(target).map(([key, value]) => {
+    if (value.item.length) {
+      value.item = value.item.map((item, idx) => {
+        const componentName = item.projectPath.split('/').slice(1).join('').toLowerCase().replace('.vue', '')
+        if (searchName === componentName) return { ...item, related: flag }
+        else return item
+      })
+    }
+    if (value.child.length) {
+      value.child.map(item => {
+        f_treeCircuit(item, searchName, flag)
+      })
+    }
+  })
+
+  return target
 }
 
 const f_selectStory = (name) => {
@@ -255,28 +275,6 @@ const c_currentComponent = computed(() => {
   return path
 })
 
-const f_treeCircuit = (target) => {
-  Object.entries(target).map(([key, value]) => {
-    if (value.item.length) {
-      value.item = value.item.map((item, idx) => {
-        const currentComponentName = params.path.slice(1).join('').toLowerCase().replace('.vue', '')
-        const componentName = item.projectPath.split('/').slice(1).join('').toLowerCase().replace('.vue', '')
-
-        if (currentComponentName === componentName) return {...item, related: 1}
-        else return {...item, related: -1}
-      })
-    }
-
-    if (value.child.length) {
-      value.child.map(item => {
-        f_treeCircuit(item)
-      })
-    }
-  })
-
-  return target
-}
-
 onMounted(() => {
   _dummy.value.map((item, idx) => {
     _stories.value.push(`#STORY${(idx + 1).toString().padStart(2, '0')}`)
@@ -285,6 +283,8 @@ onMounted(() => {
 
 watch(currentComponentRef, (newVal) => {
   nextTick(() => {
+    if (!newVal) return
+
     currentComponentRef.value = newVal
     _propsData.value = currentComponentRef.value?.$?.propsOptions || null
     _storyPropsData.value = f_getPropsData(_propsData.value)
@@ -299,7 +299,17 @@ watch(currentComponentRef, (newVal) => {
 
 watch(p_fileData, (newVal) => {
   _fileData.value = newVal
-  _componentTree.value = f_treeCircuit(_componentTree.value)
+
+  _componentTree.value = f_treeCircuit(_componentTree.value, c_currentComponent.value.toLowerCase())
+  _fileData.value.relativeCode.map(related => {
+    _componentTree.value = f_treeCircuit(_componentTree.value, related.componentName, 2)
+
+    if (related.related) {
+      related.related.map(item => {
+        _componentTree.value = f_treeCircuit(_componentTree.value, item.componentName, 3)
+      })
+    }
+  })
 })
 </script>
 
@@ -355,6 +365,7 @@ watch(p_fileData, (newVal) => {
     .preview-area {
       width: 70%;
       min-width: 200px;
+      // width: 400px;
       padding: 20px 10px;
       // padding, top menu height 계산
       height: calc(100vh - 110px);

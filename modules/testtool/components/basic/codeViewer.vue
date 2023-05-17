@@ -14,8 +14,8 @@ import hljs from 'highlight.js/lib/common'
 
 const $props = defineProps({
   code: {
-    type: String,
-    default: '',
+    type: Array,
+    default: [],
   }
 })
 
