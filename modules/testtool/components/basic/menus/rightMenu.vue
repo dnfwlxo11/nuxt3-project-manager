@@ -12,7 +12,7 @@
       </div>
     </div>
     <div v-if="_fileData" class="right-second">
-      <HorizResizeComponent>
+      <DoubleHorizResizeComponent>
         <template #leftSide>
           <div class="preview-area">
             <div v-if="!c_isComponent">
@@ -183,7 +183,7 @@
             <LineSpaceDiv :space="40" />
           </div>
         </template>
-      </HorizResizeComponent>
+      </DoubleHorizResizeComponent>
     </div>
   </div>
 </template>
@@ -196,7 +196,7 @@ import WrapperTheme from '@/modules/testtool/components/wrapper/wrapperTheme.vue
 import LineSpaceDiv from '@/modules/testtool/components/basic/lineSpaceDiv.vue'
 import CodeViewer from '@/modules/testtool/components/basic/codeViewer.vue'
 import ComponentViewer from '@/modules/testtool/components/compound/componentViewer.vue'
-import HorizResizeComponent from '@/modules/testtool/components/compound/horizResizeComponent.vue'
+import DoubleHorizResizeComponent from '@/modules/testtool/components/compound/doubleHorizResizeComponent.vue'
 import Preview from '@/modules/testtool/components/compound/preview.vue'
 // import Preview from '@/modules/testtool/pages/preview.vue'
 

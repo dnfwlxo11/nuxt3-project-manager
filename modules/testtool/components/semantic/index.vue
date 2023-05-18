@@ -1,13 +1,13 @@
 <template>
-   <TestLayout ref="layout">
-    <HorizResizeComponent>
+  <TestLayout ref="layout">
+    <DoubleHorizResizeComponent>
       <template #leftSide>
         <LeftMenu :components="_components" :imports="_imports" />
       </template>
       <template #rightSide>
         <RightMenu :fileData="_fileData" />
       </template>
-    </HorizResizeComponent>
+    </DoubleHorizResizeComponent>
   </TestLayout>
 </template>
 
@@ -16,7 +16,7 @@ import SemanticPage from '@/modules/testtool/components/semantic/index.vue'
 import TestLayout from '@/modules/testtool/components/compound/layout/default.vue'
 import LeftMenu from '@/modules/testtool/components/basic/menus/leftMenu.vue'
 import RightMenu from '@/modules/testtool/components/basic/menus/rightMenu.vue'
-import HorizResizeComponent from '@/modules/testtool/components/compound/horizResizeComponent.vue'
+import DoubleHorizResizeComponent from '~/modules/testtool/components/compound/doubleHorizResizeComponent.vue'
 
 import { io } from 'socket.io-client'
 

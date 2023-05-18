@@ -20,9 +20,7 @@
 								{{ item.name }}
 							</div>
 						</div>
-            <div class="device" v-else>
-              @{{ _currentDevice.name.charAt(0).toUpperCase() + _currentDevice.name.slice(1) }}
-            </div>
+						
 						<div class="badge">
 							<input type="number" v-model=" _currentDevice.width " :disabled=" _currentDevice.name !== 'Responsive' ">
 						</div>
@@ -31,6 +29,10 @@
 							<input type="number" v-model=" _currentDevice.height " :disabled=" _currentDevice.name !== 'Responsive' ">
 						</div>
 					</div>
+					<!-- <div class="device" v-else>
+						@{{ _currentDevice.name.charAt(0).toUpperCase() + _currentDevice.name.slice(1) }}
+					</div> -->
+
 					<div class="zoom">
 						<img src="/assets/icons/magnify-minus.svg" @click=" f_zoomOut ">
 						<div class="badge">
@@ -43,12 +45,13 @@
 					</div>
 				</div>
 				<div class="preview-content" ref="previewContentRef">
-					<div class="preview-inner" ref="previewContentInnerRef">
+					<SingleResizeComponent 
+						:width="_currentDevice.width" 
+						:height="_currentDevice.height"
+						:zoomPercentage="_zoomPercentage"
+						@update:pos="(pos) => f_updatePosition(pos)">
 						<slot />
-					</div>
-          <div class="height-resize-bar"></div>
-          <div class="width-resize-bar"></div>
-          <div class="hw-resize-bar"></div>
+					</SingleResizeComponent>
 				</div>
 			</div>
 		</div>
@@ -56,14 +59,20 @@
 </template>
 
 <script setup>
+import SingleResizeComponent from '@/modules/testtool/components/compound/singleResizeComponent.vue'
+
 const $props = defineProps({
 	device: {
+		type: Object,
+		default: () => { return {} },
+	},
+	defaultResponsive: {
 		type: Object,
 		default: () => { return {} },
 	}
 })
 
-const { device: p_device } = toRefs($props)
+const { device: p_device, defaultResponsive: p_defaultResponsive } = toRefs($props)
 
 const _currentDevice = ref()
 const _showDevices = ref(false)
@@ -107,12 +116,19 @@ const f_zoomOut = () => {
 	_zoomPercentage.value = Number(_zoomPercentage.value.toFixed(3))
 }
 
+const f_updatePosition = (pos) => {
+	_zoomPercentage.value = pos.zoomPercentage
+	_currentDevice.value.width = pos.width
+	_currentDevice.value.height = pos.height
+}
+
 const exitAction = () => {
   emit('modal:close', _currentDevice.value)
 }
 
-watch(p_device, (newVal) => {
-  _currentDevice.value = newVal
+watch([p_device, p_defaultResponsive], ([device, defaultResponsive]) => {
+  _currentDevice.value = device
+	_defaultResponsive.value = defaultResponsive
 }, { immediate: true })
 </script>
 
@@ -285,39 +301,6 @@ watch(p_device, (newVal) => {
 					transform-origin: 0 0;
 					transform: scale(v-bind('_zoomPercentage'));
 				}
-
-
-        .height-resize-bar,
-        .width-resize-bar,
-        .hw-resize-bar {
-          position: absolute;
-          background-color: #E1E3E5;
-
-          &:hover {
-            background-color: lightgray;
-          }
-        }
-
-        .height-resize-bar {
-          left: 10px;
-          top: v-bind('(_currentDevice?.height + 10) + "px"');
-          height: 15px;
-          width: v-bind('(_currentDevice?.width + 10) + "px"');
-        }
-
-        .width-resize-bar {
-          top: 10px;
-          left: v-bind('(_currentDevice?.width + 10) + "px"');
-          height: v-bind('(_currentDevice?.height + 10) + "px"');
-          width: 15px;
-        }
-
-        .hw-resize-bar {
-          top: v-bind('(_currentDevice?.height + 10) + "px"');
-          left: v-bind('(_currentDevice?.width + 10) + "px"');
-          width: 15px;
-          height: 15px;
-        }
 			}
 		}
 	}

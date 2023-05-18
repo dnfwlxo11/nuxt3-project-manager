@@ -49,15 +49,12 @@
       <div class="preview-inner">
         <slot />
       </div>
-      <div class="height-resize-bar"></div>
-      <div class="width-resize-bar"></div>
-      <div class="hw-resize-bar"></div>
 
       <!-- <iframe class="preview-inner" src="/test/preview" frameborder="0">
         <slot />
       </iframe> -->
     </div>
-    <previewModal v-if="_showModal" @modal:close="(device) => updateDevice(device)" :device="_currentDevice">
+    <previewModal v-if="_showModal" @modal:close="(device) => f_updateDevice(device)" :device="_currentDevice" :defaultResponsive="_defaultResponsive">
       <slot />
     </previewModal>
   </div>
@@ -65,6 +62,7 @@
 
 <script setup>
 import previewModal from '@/modules/testtool/components/compound/modal/previewModal.vue'
+import SingleResizeComponent from '@/modules/testtool/components/compound/singleResizeComponent.vue'
 
 const $props = defineProps({
   stories: {
@@ -132,12 +130,19 @@ const f_zoomOut = () => {
   _zoomPercentage.value = Number(_zoomPercentage.value.toFixed(3))
 }
 
-const updateDevice = (device) => {
+const f_updateDevice = (device) => {
   _currentDevice.value = device
   _showModal.value = false
 }
 
+const f_updatePosition = (pos) => {
+	_zoomPercentage.value = pos.zoomPercentage
+	_currentDevice.value.width = pos.width
+	_currentDevice.value.height = pos.height
+}
+
 onMounted(() => {
+  console.log(previewContentRef.value.offsetWidth, previewContentRef.value.offsetHeight, 'width, height')
   _defaultResponsive.value = { name: 'Responsive', width: previewContentRef.value.offsetWidth - 20, height: previewContentRef.value.offsetHeight - 20  }
   _currentDevice.value = _defaultResponsive.value
 })
@@ -214,7 +219,6 @@ watch(p_device, (newVal) => {
 
       .devices {
         position: absolute;
-        // background-color: #ECEDEF;
         backdrop-filter: blur(30px);
         top: calc(50px - 15px);
         width: 120px;
@@ -240,7 +244,7 @@ watch(p_device, (newVal) => {
         width: 50px;
         padding: 2px;
         color: #636A79;
-
+        
         &:focus {
           outline: none;
           border: none;
@@ -323,8 +327,6 @@ watch(p_device, (newVal) => {
     position: relative;
 
     .preview-inner {
-      // height: calc(100% - 20px);
-      // width: calc(100% - 20px);
       position: absolute;
       border: 1px solid lightgray;
       height: v-bind('_currentDevice?.height + "px"');
@@ -333,38 +335,6 @@ watch(p_device, (newVal) => {
       transform-origin: 0 0;
       transform: scale(v-bind('_zoomPercentage'));
     }
-
-    .height-resize-bar,
-        .width-resize-bar,
-        .hw-resize-bar {
-          position: absolute;
-          background-color: #E1E3E5;
-
-          &:hover {
-            background-color: lightgray;
-          }
-        }
-
-        .height-resize-bar {
-          left: 10px;
-          top: v-bind('(_currentDevice?.height + 10) + "px"');
-          height: 15px;
-          width: v-bind('(_currentDevice?.width + 10) + "px"');
-        }
-
-        .width-resize-bar {
-          top: 10px;
-          left: v-bind('(_currentDevice?.width + 10) + "px"');
-          height: v-bind('(_currentDevice?.height + 10) + "px"');
-          width: 15px;
-        }
-        
-        .hw-resize-bar {
-          top: v-bind('(_currentDevice?.height + 10) + "px"');
-          left: v-bind('(_currentDevice?.width + 10) + "px"');
-          width: 15px;
-          height: 15px;
-        }
   }
 }
 </style>
