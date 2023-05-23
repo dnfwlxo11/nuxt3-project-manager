@@ -76,7 +76,6 @@ onBeforeMount(() => {
 
   .resizeBar {
     height: 100%;
-    width: 2px;
     border: 1px solid inherit;
 
     &:hover {

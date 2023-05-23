@@ -1,12 +1,12 @@
 <template>
   <div class="right-menu">
     <div class="right-first">
-      <div class="menu-tab">
+      <!-- <div class="menu-tab">
         <div class="menu" :class="{ 'active': _selectTab === menu }" v-for="(menu, idx) of ['develop', 'design']"
           :key="idx" @click="_selectTab = menu">
           {{ menu.toUpperCase() }}
         </div>
-      </div>
+      </div> -->
       <div class="title">
         Playground
       </div>
@@ -16,7 +16,7 @@
         <template #leftSide>
           <div class="preview-area">
             <div v-if="!c_isComponent">
-              <div class="code">
+              <div>
                 컴포넌트 파일이 아닙니다.
               </div>
             </div>
@@ -27,18 +27,28 @@
               <LineSpaceDiv :space="20" />
               <SecondTitle :content="'PREVIEW'" />
               <LineSpaceDiv :space="10" />
-              <ComponentViewer :stories="_stories" @update:tab="(tab) => _currentStory = tab" :tab="_currentStory">
-                <Preview>
-                  <Component v-show="_currentStory === 'default'" :is="c_currentComponent" ref="currentComponentRef" />
-                  <div v-for="(item, idx) of _dummy" :key="idx">
-                    <Component v-if="_currentStory === _stories[idx + 1]" :is="c_currentComponent"
-                      :ref="(el) => _storyComponent.push(el)" :="item" />
-                  </div>
-                </Preview>
+              <div class="stories">
+                <div class="story" :class="{ 'active': _currentTab === story }" v-for="(story, idx) of _stories"
+                  :key="idx" @click="applyStory(story, _dummy[story])">
+                  {{ story }}
+                </div>
+                <div class="story-add">
+                  <img src="/assets/icons/hexagon.svg">
+                </div>
+              </div>
+              <LineSpaceDiv :space="7" />
+              <ComponentViewer>
+                <Component :is="c_currentComponent" ref="currentComponentRef" :="_currentStory" />
               </ComponentViewer>
               <LineSpaceDiv :space="30" />
               <SecondTitle :content="'CODE'" />
-              <CodeViewer :code="_fileData.templateCode" />
+              <div class="codes">
+                <CodeViewer v-if="_fileData.templateCode" :code="_fileData.templateCode" :type="'Template'" />
+                <LineSpaceDiv :space="26" />
+                <CodeViewer v-if="_fileData.scriptCode" :code="_fileData.scriptCode" :type="'Script'" />
+                <LineSpaceDiv :space="26" />
+                <CodeViewer v-if="_fileData.styleCode" :code="_fileData.styleCode" :type="'Style'" />
+              </div>
             </div>
           </div>
         </template>
@@ -92,26 +102,14 @@
                 STORY
               </div>
               <div class="stories">
-                <div class="story" v-for="(dummyItem, idx) of _dummy" :key="idx">
-                  <div class="story-menu">
-                    <div class="story-badge">
-                      #STORY{{ (idx + 1).toString().padStart(2, '0') }}
-                    </div>
-                    <div class="story-btn">
-                      <button @click="f_selectStory(`#STORY${(idx + 1).toString().padStart(2, '0')}`)" :class="{
-                        'active': _currentStory === `#STORY${(idx + 1).toString().padStart(2, '0')}`
-                      }">
-                        <span v-if="_currentStory === `#STORY${(idx + 1).toString().padStart(2, '0')}`">
-                          <img src="/assets/icons/done.svg" />
-                        </span>
-                        <span v-else>
-                          적용
-                        </span>
-                      </button>
+                <div class="story" v-for="(item, key) in _dummy" :key="idx">
+                  <div class="story-menu" @click="applyStory(key, item)">
+                    <div class="story-badge" :class="{ 'active': _currentTab === key }">
+                      <span>{{ key }}</span>
                     </div>
                   </div>
                   <div class="table-content">
-                    <table class="table">
+                    <table class="table" :class="{ 'active': _currentTab === key }">
                       <thead>
                         <tr>
                           <th>Name</th>
@@ -119,10 +117,12 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(item, key) in dummyItem" :key="key">
-                          <td>{{ key }}</td>
-                          <td><input type="text" v-model="dummyItem[key]"></td>
-                        </tr>
+                        <template v-for="(dummyItem, key) in item" :key="key">
+                          <tr v-if="key !== 'name' && key !== 'added'">
+                            <td>{{ key }}</td>
+                            <td><input type="text" v-model="item[key]"></td>
+                          </tr>
+                        </template>
                       </tbody>
                     </table>
                   </div>
@@ -218,16 +218,17 @@ const _componentData = ref()
 const _stateData = ref()
 const currentComponentRef = ref()
 const _stories = ref(['default'])
-const _dummy = ref([
-  { test: "prop test1", content: "Button1" },
-  { test: "prop test2", content: "Button2" },
-  { test: "prop test3", content: "Button3" },
-])
+const _dummy = ref({
+  '#STORY01': { test: "prop test1", content: "Button1", added: false },
+  '#STORY02': { test: "prop test2", content: "Button2", added: false },
+  '#STORY03': { test: "prop test3", content: "Button3", added: false },
+})
 const _storyComponent = ref([])
-const _currentStory = ref('default')
+const _currentStory = ref()
 const $router = useRouter()
 const { params } = useRoute()
 const _componentTree = useState('componentsTree')
+const _currentTab = ref('default')
 
 const f_getPropsData = (props) => {
   const propsData = {}
@@ -240,7 +241,13 @@ const f_treeCircuit = (target, searchName, flag = 1) => {
   Object.entries(target).map(([key, value]) => {
     if (value.item.length) {
       value.item = value.item.map((item, idx) => {
-        const componentName = item.projectPath.split('/').slice(1).join('').toLowerCase().replace('.vue', '')
+        const projectPathArr = item.projectPath.split('/').slice(1)
+        const lastName = projectPathArr[projectPathArr.length - 1].toLowerCase().replace('.vue', '')
+
+        if (lastName === 'index') projectPathArr.pop()
+
+        const componentName = projectPathArr.join('').toLowerCase().replace('.vue', '')
+
         if (searchName === componentName) return { ...item, related: flag }
         else return item
       })
@@ -255,8 +262,28 @@ const f_treeCircuit = (target, searchName, flag = 1) => {
   return target
 }
 
-const f_selectStory = (name) => {
-  _currentStory.value = name
+const applyStory = (key, value) => {
+  if (key === 'default') {
+    _currentStory.value = {}
+  } else {
+    _currentStory.value = value
+  }
+
+  _currentTab.value = key
+}
+
+const f_addedStory = (story) => {
+  Object.entries(story).map(([key, value]) => {
+    if (value.added) {
+      value.added = false
+      _stories.value = _stories.value.filter(item => item !== key)
+      _currentTab.value = 'default'
+      _currentStory.value = {}
+    } else {
+      value.added = true
+      _stories.value.push(key)
+    }
+  })
 }
 
 const c_isComponent = computed(() => {
@@ -276,8 +303,8 @@ const c_currentComponent = computed(() => {
 })
 
 onMounted(() => {
-  _dummy.value.map((item, idx) => {
-    _stories.value.push(`#STORY${(idx + 1).toString().padStart(2, '0')}`)
+  Object.entries(_dummy.value).map(([key, value]) => {
+    _stories.value.push(key)
   })
 })
 
@@ -373,6 +400,50 @@ watch(p_fileData, (newVal) => {
       overflow-x: hidden;
       overflow-y: auto;
 
+      .stories {
+        display: flex;
+        position: relative;
+        box-sizing: border-box;
+        border-bottom: 1px solid #C1C5CD;
+
+        .story {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100px;
+          height: 26px;
+          font-size: 11px;
+          font-weight: 600;
+          line-height: 29px;
+          letter-spacing: 0%;
+          color: #C1C5CD;
+
+          &:hover {
+            cursor: pointer;
+          }
+        }
+
+        .story-add {
+          position: absolute;
+          right: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 20px;
+          height: 26px;
+        }
+
+        .active {
+          color: #494F5A;
+          border-bottom: 4px solid #494F5A;
+        }
+      }
+
+      .codes {
+        padding: 16px;
+        background-color: #32363E;
+      }
+
       &::-webkit-scrollbar {
         display: none;
       }
@@ -412,6 +483,10 @@ watch(p_fileData, (newVal) => {
                 line-height: 29px;
                 letter-spacing: 0%;
                 font-size: 16px;
+
+                &.active {
+                  background-color: #7966FF;
+                }
               }
 
               .story-btn {
@@ -460,6 +535,11 @@ watch(p_fileData, (newVal) => {
         }
 
         .table-content {
+          .active {
+            outline: 3px solid #7966FF;
+            outline-offset: -3px;
+          }
+
           table {
             border-top: 1px solid #ECEDEF;
             width: 100%;
@@ -517,11 +597,5 @@ watch(p_fileData, (newVal) => {
   .third-area {
     background-color: lightblue;
   }
-}
-
-.code {
-  background-color: #F1F3F5;
-  border-radius: 0.5rem;
-  padding: 30px;
 }
 </style>

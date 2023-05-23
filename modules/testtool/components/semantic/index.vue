@@ -83,7 +83,6 @@ const { params } = useRoute()
 
 onMounted(() => {
   _socket.value = io('http://localhost:11000')
-  // _socket.value = io('http://192.168.123.187:11000')
 
   _socket.value.on('imports:extend', (data) => {
     _importsBasePath.value = data.basePath

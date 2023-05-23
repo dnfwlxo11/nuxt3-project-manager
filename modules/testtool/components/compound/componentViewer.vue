@@ -39,12 +39,6 @@
         <img src="/assets/icons/export.svg" @click="_showModal=true">
       </div>
     </div>
-    <div v-if="p_stories.length" class="preview-tabs">
-      <div class="tab" :class="{ 'active': item === _currentTab } " v-for="(item, idx) of p_stories"
-        :key="idx" @click="f_selectStory(item)">
-        <span class="tab-name">{{ item }}</span>
-      </div>
-    </div>
     <div class="preview-content" ref="previewContentRef">
       <div class="preview-inner">
         <slot />
@@ -65,14 +59,6 @@ import previewModal from '@/modules/testtool/components/compound/modal/previewMo
 import SingleResizeComponent from '@/modules/testtool/components/compound/singleResizeComponent.vue'
 
 const $props = defineProps({
-  stories: {
-    type: Array,
-    default: []
-  },
-  tab: {
-    type: String,
-    default: 'default',
-  },
   device: {
     type: String,
     default: '',
@@ -80,8 +66,7 @@ const $props = defineProps({
 })
 
 const emit = defineEmits(['update:tab'])
-const { stories: p_stories, tab: p_tab, device: p_device } = toRefs($props)
-const _currentTab = ref()
+const { device: p_device } = toRefs($props)
 const _showDevices = ref(false)
 const previewContentRef = ref()
 const _currentDevice = ref()
@@ -101,11 +86,6 @@ const devices = ref([
 const f_sizeVaild = (direction) => {
   if (direction === 'w' && _currentDevice.value.width >= 10000) _currentDevice.value.width = 9999
   else if (direction === 'h' && _currentDevice.value.height >= 10000) _currentDevice.value.height = 9999
-}
-
-const f_selectStory = (name) => {
-  _currentTab.value = name
-  emit('update:tab', _currentTab.value)
 }
 
 const f_zoomIn = () => {
@@ -146,10 +126,6 @@ onMounted(() => {
   _defaultResponsive.value = { name: 'Responsive', width: previewContentRef.value.offsetWidth - 20, height: previewContentRef.value.offsetHeight - 20  }
   _currentDevice.value = _defaultResponsive.value
 })
-
-watch(p_tab, (newVal) => {
-  _currentTab.value = newVal
-}, { immediate: true })
 
 watch(p_device, (newVal) => {
   _currentDevice.value = newVal
@@ -277,49 +253,6 @@ watch(p_device, (newVal) => {
       margin: auto 20px auto 10px;
     }
   }
-
-  .preview-tabs {
-    display: flex;
-    width: 100%;
-    max-width: 100%;
-    height: 30px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    border-bottom: 1px solid #ECEDEF;
-    background-color: #F8F9FB;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    .active {
-      color: #ECEDEF;
-      background-color: #CCCFD7;
-    }
-
-    .tab {
-      height: 100%;
-      width: calc(100% / v-bind('p_stories.length ? p_stories.length : 1'));
-      min-width: 50px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #69717F;
-      font-size: 16px;
-      border-right: 1px solid #ECEDEF;
-
-      .tab-name {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      &:hover {
-        cursor: pointer;
-      }
-    }
-  }
-
   .preview-content {
     height: 330px;
     padding: 10px;

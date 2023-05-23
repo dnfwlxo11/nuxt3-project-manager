@@ -27,23 +27,25 @@ const f_createBreadcrumb = () => {
   display: inline-flex;
   justify-content: flex-end;
   align-items: center;
-  height: 24px;
-  padding: 5px 10px;
+  height: 20px;
+  padding: 2px 10px;
   background-color: #F8F9FB;
+  border-radius: 3px;
   font-size: 12px;
   font-weight: 500;
   line-height: 14px;
-  box-shadow: inset 0px 0px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 27px;
   max-width: 300px;
   overflow-x: scroll;
   overflow-y: hidden;
   text-overflow: ellipsis;
+
   &::-webkit-scrollbar {
     display: none;
   }
+
   .step {
-    color: #D2D5DA;
+    color: #C1C5CD;
+
   }
 
   .step:last-child {
